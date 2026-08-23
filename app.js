@@ -851,9 +851,87 @@ function getQRCanvas() {
     }
 
 
-    return qr.querySelector(
-        "canvas"
+    const original =
+        qr.querySelector(
+            "canvas"
+        );
+
+
+    if (!original) {
+
+        return null;
+
+    }
+
+
+    /*
+       Create a larger PNG canvas.
+
+       The QR code sits in the middle
+       with plenty of white space around it.
+
+       This makes the saved/shared image
+       much easier for cameras to scan.
+    */
+
+    const output =
+        document.createElement(
+            "canvas"
+        );
+
+
+    const padding = 80;
+
+    const size =
+        Math.max(
+            original.width,
+            original.height
+        );
+
+
+    output.width =
+        size + padding * 2;
+
+
+    output.height =
+        size + padding * 2;
+
+
+    const ctx =
+        output.getContext(
+            "2d"
+        );
+
+
+    // White background
+
+    ctx.fillStyle =
+        "#ffffff";
+
+    ctx.fillRect(
+        0,
+        0,
+        output.width,
+        output.height
     );
+
+
+    // Put QR in the centre
+
+    ctx.drawImage(
+
+        original,
+
+        padding,
+        padding,
+
+        size,
+        size
+
+    );
+
+
+    return output;
 
 }
 

@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta name="viewport"
@@ -15,22 +16,29 @@
     <link rel="stylesheet"
           href="style.css">
 
-    <!-- QR CODE GENERATOR -->
+    <!-- QR GENERATOR -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <!-- QR CODE SCANNER -->
+    <!-- QR SCANNER -->
     <script src="https://unpkg.com/html5-qrcode"
             type="text/javascript"></script>
 
+    <!-- FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
 </head>
+
 
 <body>
 
 <div class="app">
 
-    <!-- ============================= -->
+
+    <!-- ================================= -->
     <!-- HEADER -->
-    <!-- ============================= -->
+    <!-- ================================= -->
 
     <header>
 
@@ -55,9 +63,9 @@
     </header>
 
 
-    <!-- ============================= -->
+    <!-- ================================= -->
     <!-- HOME -->
-    <!-- ============================= -->
+    <!-- ================================= -->
 
     <section id="home"
              class="screen active">
@@ -82,22 +90,23 @@
             </span>
 
             <strong>
+
                 MWK
                 <span id="balance">
                     50,000
                 </span>
+
             </strong>
 
             <small>
-                Demo account
+                Mock balance for testing
             </small>
 
         </div>
 
 
-        <!-- ACTIONS -->
-
         <div class="main-actions">
+
 
             <button
                 class="action receive"
@@ -167,10 +176,9 @@
 
             </button>
 
+
         </div>
 
-
-        <!-- ACCOUNTS -->
 
         <div class="accounts-preview">
 
@@ -191,9 +199,9 @@
     </section>
 
 
-    <!-- ============================= -->
+    <!-- ================================= -->
     <!-- REGISTER -->
-    <!-- ============================= -->
+    <!-- ================================= -->
 
     <section id="register"
              class="screen">
@@ -214,8 +222,8 @@
 
         <p class="subtitle">
 
-            Add an account that can be used
-            for sending and receiving payments.
+            Add an account that can send
+            and receive QuickPay payments.
 
         </p>
 
@@ -306,12 +314,12 @@
             >
 
 
-            <p class="warning">
+            <div class="warning">
 
-                ⚠ Demo only —
-                never enter your real banking PIN.
+                ⚠ Demo only. Do not enter
+                a real banking PIN.
 
-            </p>
+            </div>
 
 
             <button
@@ -328,9 +336,9 @@
     </section>
 
 
-    <!-- ============================= -->
+    <!-- ================================= -->
     <!-- SEND -->
-    <!-- ============================= -->
+    <!-- ================================= -->
 
     <section id="send"
              class="screen">
@@ -347,6 +355,13 @@
         <h2>
             Send Money
         </h2>
+
+
+        <p class="subtitle">
+
+            Create a payment QR for the receiver.
+
+        </p>
 
 
         <form id="sendForm">
@@ -410,18 +425,18 @@
     </section>
 
 
-    <!-- ============================= -->
+    <!-- ================================= -->
     <!-- PAYMENT QR -->
-    <!-- ============================= -->
+    <!-- ================================= -->
 
     <section id="paymentQR"
              class="screen">
 
         <button
             class="back"
-            onclick="showScreen('send')">
+            onclick="cancelPayment()">
 
-            ← Back
+            ← Cancel
 
         </button>
 
@@ -451,7 +466,9 @@
                 Provider
             </span>
 
-            <strong id="qrProvider"></strong>
+            <strong id="qrProvider">
+                —
+            </strong>
 
 
             <span>
@@ -459,8 +476,12 @@
             </span>
 
             <strong>
+
                 MWK
-                <span id="qrAmount"></span>
+                <span id="qrAmount">
+                    0
+                </span>
+
             </strong>
 
 
@@ -468,32 +489,46 @@
                 Sender
             </span>
 
-            <strong id="qrSender"></strong>
+            <strong id="qrSender">
+                —
+            </strong>
+
+
+            <span>
+                Transaction
+            </span>
+
+            <strong id="qrTransaction">
+                —
+            </strong>
 
         </div>
 
 
-        <div class="waiting">
+        <div
+            id="senderStatus"
+            class="waiting">
 
-            📱 Waiting for receiver to scan...
+            🟡 Waiting for receiver to scan...
 
         </div>
 
 
         <button
+            id="senderDoneButton"
             class="secondary"
-            onclick="showScreen('home')">
+            onclick="cancelPayment()">
 
-            Done
+            Cancel Payment
 
         </button>
 
     </section>
 
 
-    <!-- ============================= -->
+    <!-- ================================= -->
     <!-- RECEIVE / SCANNER -->
-    <!-- ============================= -->
+    <!-- ================================= -->
 
     <section id="receive"
              class="screen">
@@ -536,14 +571,15 @@
     </section>
 
 
-    <!-- ============================= -->
-    <!-- PAYMENT NOTIFICATION -->
-    <!-- ============================= -->
+    <!-- ================================= -->
+    <!-- RECEIVER NOTIFICATION -->
+    <!-- ================================= -->
 
     <section id="notification"
              class="screen">
 
         <div class="notification-page">
+
 
             <div class="notification-icon">
                 ✓
@@ -551,12 +587,12 @@
 
 
             <div class="notification-label">
-                PAYMENT RECEIVED
+                PAYMENT REQUEST
             </div>
 
 
             <h2>
-                Money Received
+                Payment Received
             </h2>
 
 
@@ -573,7 +609,7 @@
             <div class="notification-message">
 
                 <p>
-                    You have received a payment from
+                    Payment from
                 </p>
 
                 <strong id="notificationSender">
@@ -585,10 +621,11 @@
 
             <div class="notification-details">
 
+
                 <div>
 
                     <span>
-                        From
+                        Provider
                     </span>
 
                     <strong id="notificationProvider">
@@ -601,7 +638,7 @@
                 <div>
 
                     <span>
-                        To
+                        Receive To
                     </span>
 
                     <strong id="notificationReceiver">
@@ -636,30 +673,42 @@
 
                 </div>
 
+
             </div>
 
 
             <button
                 class="primary"
-                onclick="acceptNotification()">
+                onclick="confirmReceive()">
 
-                OK
+                Confirm & Receive
 
             </button>
+
+
+            <button
+                class="secondary"
+                onclick="showScreen('home')">
+
+                Cancel
+
+            </button>
+
 
         </div>
 
     </section>
 
 
-    <!-- ============================= -->
-    <!-- SUCCESS -->
-    <!-- ============================= -->
+    <!-- ================================= -->
+    <!-- RECEIVED SUCCESS -->
+    <!-- ================================= -->
 
     <section id="success"
              class="screen">
 
         <div class="success-page">
+
 
             <div class="big-success">
                 ✓
@@ -672,7 +721,7 @@
 
 
             <p>
-                The mock transaction has been completed.
+                Money has been received.
             </p>
 
 
@@ -688,11 +737,30 @@
 
             <div class="success-info">
 
+
+                <span>
+                    Received From
+                </span>
+
+                <strong id="successSender">
+                    —
+                </strong>
+
+
                 <span>
                     Provider
                 </span>
 
                 <strong id="successProvider">
+                    —
+                </strong>
+
+
+                <span>
+                    Received By
+                </span>
+
+                <strong id="successReceiver">
                     —
                 </strong>
 
@@ -705,6 +773,7 @@
                     —
                 </strong>
 
+
             </div>
 
 
@@ -716,14 +785,116 @@
 
             </button>
 
+
         </div>
 
     </section>
 
 
-    <!-- ============================= -->
-    <!-- TOAST NOTIFICATION -->
-    <!-- ============================= -->
+    <!-- ================================= -->
+    <!-- SENDER COMPLETED -->
+    <!-- ================================= -->
+
+    <section id="senderCompleted"
+             class="screen">
+
+        <div class="success-page">
+
+
+            <div class="big-success">
+                ✓
+            </div>
+
+
+            <h2>
+                Payment Completed
+            </h2>
+
+
+            <p>
+                The receiver has successfully
+                received your payment.
+            </p>
+
+
+            <div class="success-amount">
+
+                MWK
+                <span id="senderCompletedAmount">
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="success-info">
+
+
+                <span>
+                    Sent To
+                </span>
+
+                <strong id="senderCompletedReceiver">
+                    —
+                </strong>
+
+
+                <span>
+                    Provider
+                </span>
+
+                <strong id="senderCompletedProvider">
+                    —
+                </strong>
+
+
+                <span>
+                    Receiver Account
+                </span>
+
+                <strong id="senderCompletedAccount">
+                    —
+                </strong>
+
+
+                <span>
+                    Transaction
+                </span>
+
+                <strong id="senderCompletedTransaction">
+                    —
+                </strong>
+
+
+                <span>
+                    Completed
+                </span>
+
+                <strong id="senderCompletedTime">
+                    —
+                </strong>
+
+
+            </div>
+
+
+            <button
+                class="primary"
+                onclick="showScreen('home')">
+
+                Return Home
+
+            </button>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================= -->
+    <!-- TOAST -->
+    <!-- ================================= -->
 
     <div id="toast"
          class="toast">
@@ -745,6 +916,7 @@
         </div>
 
     </div>
+
 
 </div>
 

@@ -62,7 +62,6 @@ header {
 .logo-icon {
 
     width: 45px;
-
     height: 45px;
 
     border-radius: 12px;
@@ -74,7 +73,6 @@ header {
     display: flex;
 
     align-items: center;
-
     justify-content: center;
 
     font-size: 24px;
@@ -158,11 +156,9 @@ header {
 
 .balance-card span {
 
-    display: inline;
-
     font-size: 13px;
 
-    opacity: .85;
+    opacity: .9;
 
 }
 
@@ -219,17 +215,9 @@ header {
 }
 
 
-.action:hover {
-
-    transform: translateY(-1px);
-
-}
-
-
 .action-icon {
 
     width: 45px;
-
     height: 45px;
 
     border-radius: 50%;
@@ -237,7 +225,6 @@ header {
     display: flex;
 
     align-items: center;
-
     justify-content: center;
 
     font-size: 25px;
@@ -447,10 +434,7 @@ select:focus {
 }
 
 
-/* ========================= */
 /* QR */
-/* ========================= */
-
 
 .qr-container {
 
@@ -514,6 +498,8 @@ select:focus {
 
     margin-top: 4px;
 
+    word-break: break-word;
+
 }
 
 
@@ -525,12 +511,13 @@ select:focus {
 
     color: #777;
 
+    padding: 15px;
+
+    background: #fff8df;
+
+    border-radius: 10px;
+
 }
-
-
-/* ========================= */
-/* SCANNER */
-/* ========================= */
 
 
 #reader {
@@ -553,16 +540,13 @@ select:focus {
 }
 
 
-/* ========================= */
-/* PAYMENT NOTIFICATION */
-/* ========================= */
-
+/* NOTIFICATION */
 
 .notification-page {
 
     text-align: center;
 
-    padding-top: 20px;
+    padding-top: 10px;
 
 }
 
@@ -570,7 +554,6 @@ select:focus {
 .notification-icon {
 
     width: 75px;
-
     height: 75px;
 
     border-radius: 50%;
@@ -582,7 +565,6 @@ select:focus {
     display: flex;
 
     align-items: center;
-
     justify-content: center;
 
     margin: 0 auto 20px;
@@ -658,7 +640,7 @@ select:focus {
 
     margin-top: 15px;
 
-    background: #ffffff;
+    background: white;
 
     border:
         1px solid #eeeeee;
@@ -713,16 +695,13 @@ select:focus {
 }
 
 
-/* ========================= */
 /* SUCCESS */
-/* ========================= */
-
 
 .success-page {
 
     text-align: center;
 
-    padding-top: 50px;
+    padding-top: 30px;
 
 }
 
@@ -730,7 +709,6 @@ select:focus {
 .big-success {
 
     width: 65px;
-
     height: 65px;
 
     border-radius: 50%;
@@ -742,7 +720,6 @@ select:focus {
     display: flex;
 
     align-items: center;
-
     justify-content: center;
 
     margin: auto;
@@ -764,6 +741,8 @@ select:focus {
     color: #777;
 
     margin: 10px 0;
+
+    line-height: 1.5;
 
 }
 
@@ -811,10 +790,16 @@ select:focus {
 }
 
 
-/* ========================= */
-/* TOAST NOTIFICATION */
-/* ========================= */
+.success-info strong {
 
+    margin-top: 3px;
+
+    word-break: break-word;
+
+}
+
+
+/* TOAST */
 
 .toast {
 
@@ -867,7 +852,6 @@ select:focus {
 .toast-icon {
 
     width: 38px;
-
     height: 38px;
 
     border-radius: 50%;
@@ -879,7 +863,6 @@ select:focus {
     display: flex;
 
     align-items: center;
-
     justify-content: center;
 
     font-weight: bold;

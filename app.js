@@ -1,11 +1,17 @@
-// ==========================================
-// QUICKPAY + FIREBASE
-// ==========================================
+/* ==========================================
+   QUICKPAY
+   Receiver QR Payment Model
+   ========================================== */
+
+
+/* ==========================================
+   FIREBASE
+   ========================================== */
 
 const firebaseConfig = {
 
     apiKey:
-        "AIzaSyC9cQ5SRO5hrHMRywxAiQQ--uYdIXL57fw",
+        "AIzaSyC9qC5Q9SRO5hrHMRywxAiQQ--uYdIXL57fw",
 
     authDomain:
         "quickpay-63af0.firebaseapp.com",
@@ -27,112 +33,52 @@ const firebaseConfig = {
 
 };
 
-firebase.initializeApp(firebaseConfig);
 
-const database = firebase.database();
+firebase.initializeApp(
+    firebaseConfig
+);
 
 
-// ==========================================
-// VARIABLES
-// ==========================================
+const database =
+    firebase.database();
 
-let balance = 50000;
 
-let currentPayment = null;
 
-let currentReceiver = null;
+/* ==========================================
+   GLOBAL VARIABLES
+   ========================================== */
 
 let scanner = null;
 
-let senderTransactionListener = null;
+let scannerRunning = false;
 
-let currentTransactionType = "sent";
+let currentReceiveTransactionId = null;
 
+let currentPaymentRequest = null;
 
-// ==========================================
-// NAVIGATION
-// ==========================================
+let selectedPayAccount = null;
 
-function showScreen(screenName) {
+let transactionListener = null;
 
-    document
-        .querySelectorAll(".screen")
-        .forEach(screen => {
-
-            screen.classList.remove("active");
-
-        });
+let transactionType = "sent";
 
 
-    const screen =
-        document.getElementById(screenName);
 
-
-    if (screen) {
-
-        screen.classList.add("active");
-
-    }
-
-
-    if (
-        screenName !== "receive" &&
-        scanner
-    ) {
-
-        stopScanner();
-
-    }
-
-
-    // IMPORTANT:
-    // Reload registered accounts whenever
-    // the Send page is opened.
-
-    if (screenName === "send") {
-
-        loadSendAccounts();
-
-    }
-
-
-    if (screenName === "home") {
-
-        loadAccounts();
-
-        loadBalance();
-
-    }
-
-}
-
-
-// ==========================================
-// ACCOUNTS
-// ==========================================
+/* ==========================================
+   LOCAL ACCOUNTS
+   ========================================== */
 
 function getAccounts() {
 
-    const accounts =
-        localStorage.getItem(
-            "quickpay_accounts"
-        );
-
-
-    if (!accounts) {
-
-        return [];
-
-    }
-
-
     try {
 
-        return JSON.parse(accounts);
+        return JSON.parse(
+            localStorage.getItem(
+                "quickpay_accounts"
+            )
+        ) || [];
 
-    }
-
-    catch {
+    } catch (error) {
 
         return [];
 
@@ -151,12 +97,177 @@ function saveAccounts(accounts) {
 }
 
 
-// ==========================================
-// REGISTER
-// ==========================================
+function getTransactions() {
+
+    try {
+
+        return JSON.parse(
+            localStorage.getItem(
+                "quickpay_transactions"
+            )
+        ) || [];
+
+    } catch (error) {
+
+        return [];
+
+    }
+
+}
+
+
+function saveTransactions(transactions) {
+
+    localStorage.setItem(
+        "quickpay_transactions",
+        JSON.stringify(transactions)
+    );
+
+}
+
+
+
+/* ==========================================
+   SCREEN NAVIGATION
+   ========================================== */
+
+function showScreen(screenName) {
+
+    document
+        .querySelectorAll(".screen")
+        .forEach(screen => {
+
+            screen.classList.remove(
+                "active"
+            );
+
+        });
+
+
+    const screen =
+        document.getElementById(
+            screenName
+        );
+
+
+    if (!screen) {
+
+        return;
+
+    }
+
+
+    screen.classList.add(
+        "active"
+    );
+
+
+    if (
+        screenName !== "scanner" &&
+        scannerRunning
+    ) {
+
+        stopScanner();
+
+    }
+
+
+    if (
+        screenName === "home"
+    ) {
+
+        loadAccounts();
+
+        loadBalance();
+
+    }
+
+
+    if (
+        screenName === "accounts"
+    ) {
+
+        loadAccounts();
+
+    }
+
+
+    if (
+        screenName === "receive"
+    ) {
+
+        loadReceiveAccounts();
+
+    }
+
+
+    if (
+        screenName === "pay"
+    ) {
+
+        loadPayAccounts();
+
+    }
+
+
+    if (
+        screenName === "transactions"
+    ) {
+
+        loadTransactions();
+
+    }
+
+}
+
+
+
+/* ==========================================
+   TOAST
+   ========================================== */
+
+function showToast(
+    title,
+    message
+) {
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+    document.getElementById(
+        "toastTitle"
+    ).textContent = title;
+
+    document.getElementById(
+        "toastMessage"
+    ).textContent = message;
+
+
+    toast.classList.add(
+        "show"
+    );
+
+
+    setTimeout(() => {
+
+        toast.classList.remove(
+            "show"
+        );
+
+    }, 3000);
+
+}
+
+
+
+/* ==========================================
+   ACCOUNT REGISTRATION
+   ========================================== */
 
 document
-    .getElementById("registerForm")
+    .getElementById("accountForm")
     .addEventListener(
         "submit",
         function(event) {
@@ -165,27 +276,39 @@ document
 
 
             const provider =
-                document.getElementById(
-                    "provider"
-                ).value;
+                document
+                    .getElementById(
+                        "provider"
+                    )
+                    .value
+                    .trim();
 
 
             const accountNumber =
-                document.getElementById(
-                    "accountNumber"
-                ).value.trim();
+                document
+                    .getElementById(
+                        "accountNumber"
+                    )
+                    .value
+                    .trim();
 
 
             const accountName =
-                document.getElementById(
-                    "accountName"
-                ).value.trim();
+                document
+                    .getElementById(
+                        "accountName"
+                    )
+                    .value
+                    .trim();
 
 
             const pin =
-                document.getElementById(
-                    "pin"
-                ).value.trim();
+                document
+                    .getElementById(
+                        "accountPin"
+                    )
+                    .value
+                    .trim();
 
 
             if (
@@ -205,18 +328,6 @@ document
             }
 
 
-            if (!/^\d{4}$/.test(pin)) {
-
-                showToast(
-                    "Invalid PIN",
-                    "Demo PIN must contain 4 digits."
-                );
-
-                return;
-
-            }
-
-
             const accounts =
                 getAccounts();
 
@@ -227,45 +338,56 @@ document
                     "ACC-" +
                     Date.now(),
 
-                provider,
+                provider:
+                    provider,
 
-                accountNumber,
+                accountNumber:
+                    accountNumber,
 
-                accountName,
+                accountName:
+                    accountName,
 
-                pin
+                /*
+                   Prototype only.
+
+                   Never store a real
+                   mobile-money PIN here.
+                */
+
+                demoPin:
+                    pin
 
             });
 
 
-            saveAccounts(accounts);
-
-
-            showToast(
-                "Account registered",
-                `${provider} account saved.`
+            saveAccounts(
+                accounts
             );
 
 
             document
                 .getElementById(
-                    "registerForm"
+                    "accountForm"
                 )
                 .reset();
 
 
-            setTimeout(
-                () => showScreen("home"),
-                700
+            loadAccounts();
+
+
+            showToast(
+                "Account added",
+                "Your account has been registered."
             );
 
         }
     );
 
 
-// ==========================================
-// ACCOUNT DISPLAY
-// ==========================================
+
+/* ==========================================
+   LOAD ACCOUNTS
+   ========================================== */
 
 function loadAccounts() {
 
@@ -273,70 +395,151 @@ function loadAccounts() {
         getAccounts();
 
 
-    const container =
+    const list =
         document.getElementById(
             "accountsList"
         );
 
 
+    const home =
+        document.getElementById(
+            "homeAccounts"
+        );
+
+
     if (!accounts.length) {
 
-        container.innerHTML =
-            '<p class="empty">' +
-            'No accounts registered yet.' +
-            '</p>';
+        list.innerHTML =
+            '<div class="empty">No accounts registered yet.</div>';
+
+        home.innerHTML =
+            '<div class="empty">Add an account to get started.</div>';
 
         return;
 
     }
 
 
-    container.innerHTML = "";
+    list.innerHTML =
+        accounts
+            .map(account => {
+
+                return `
+
+                    <div class="account-item">
+
+                        <strong>
+                            ${escapeHTML(account.provider)}
+                        </strong>
+
+                        <span>
+                            ${escapeHTML(account.accountName)}
+                        </span>
+
+                        <span>
+                            ${escapeHTML(maskAccount(account.accountNumber))}
+                        </span>
+
+                    </div>
+
+                `;
+
+            })
+            .join("");
 
 
-    accounts.forEach(account => {
+    home.innerHTML =
+        accounts
+            .map(account => {
 
-        const item =
-            document.createElement("div");
+                return `
 
+                    <div class="account-item">
 
-        item.className =
-            "account-item";
+                        <strong>
+                            ${escapeHTML(account.provider)}
+                        </strong>
 
+                        <span>
+                            ${escapeHTML(account.accountName)}
+                            •
+                            ${escapeHTML(maskAccount(account.accountNumber))}
+                        </span>
 
-        item.innerHTML = `
+                    </div>
 
-            <strong>
-                ${escapeHTML(account.provider)}
-            </strong>
+                `;
 
-            <span>
-                ${escapeHTML(account.accountName)}
-            </span>
-
-            <span>
-                ${maskAccount(account.accountNumber)}
-            </span>
-
-        `;
-
-
-        container.appendChild(item);
-
-    });
+            })
+            .join("");
 
 }
 
 
-// ==========================================
-// SEND ACCOUNT DROPDOWN
-// ==========================================
 
-function loadSendAccounts() {
+/* ==========================================
+   RECEIVE ACCOUNTS
+   ========================================== */
+
+function loadReceiveAccounts() {
 
     const select =
         document.getElementById(
-            "sendAccount"
+            "receiveAccount"
+        );
+
+
+    const accounts =
+        getAccounts();
+
+
+    select.innerHTML =
+        '<option value="">Select receiving account</option>';
+
+
+    accounts.forEach(
+        (account, index) => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                index;
+
+
+            option.textContent =
+                account.provider +
+                " • " +
+                maskAccount(
+                    account.accountNumber
+                ) +
+                " • " +
+                account.accountName;
+
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
+}
+
+
+
+/* ==========================================
+   PAY ACCOUNTS
+   ========================================== */
+
+function loadPayAccounts() {
+
+    const select =
+        document.getElementById(
+            "payAccount"
         );
 
 
@@ -348,34 +551,46 @@ function loadSendAccounts() {
         '<option value="">Select account</option>';
 
 
-    accounts.forEach(account => {
+    accounts.forEach(
+        (account, index) => {
 
-        const option =
-            document.createElement("option");
-
-
-        option.value =
-            account.id;
-
-
-        option.textContent =
-            `${account.provider} - ` +
-            `${maskAccount(account.accountNumber)}`;
+            const option =
+                document.createElement(
+                    "option"
+                );
 
 
-        select.appendChild(option);
+            option.value =
+                index;
 
-    });
+
+            option.textContent =
+                account.provider +
+                " • " +
+                maskAccount(
+                    account.accountNumber
+                ) +
+                " • " +
+                account.accountName;
+
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
 
 }
 
 
-// ==========================================
-// SEND
-// ==========================================
+
+/* ==========================================
+   RECEIVE / GENERATE QR
+   ========================================== */
 
 document
-    .getElementById("sendForm")
+    .getElementById("receiveForm")
     .addEventListener(
         "submit",
         async function(event) {
@@ -383,42 +598,36 @@ document
             event.preventDefault();
 
 
-            const accountID =
-                document.getElementById(
-                    "sendAccount"
-                ).value;
+            const index =
+                document
+                    .getElementById(
+                        "receiveAccount"
+                    )
+                    .value;
 
 
             const amount =
                 Number(
-                    document.getElementById(
-                        "amount"
-                    ).value
+                    document
+                        .getElementById(
+                            "receiveAmount"
+                        )
+                        .value
                 );
-
-
-            const pin =
-                document.getElementById(
-                    "sendPin"
-                ).value.trim();
 
 
             const accounts =
                 getAccounts();
 
 
-            const account =
-                accounts.find(
-                    acc =>
-                        acc.id === accountID
-                );
-
-
-            if (!account) {
+            if (
+                index === "" ||
+                !accounts[index]
+            ) {
 
                 showToast(
-                    "Account error",
-                    "Select a valid account."
+                    "Select account",
+                    "Please select a receiving account."
                 );
 
                 return;
@@ -426,7 +635,10 @@ document
             }
 
 
-            if (!amount || amount <= 0) {
+            if (
+                !amount ||
+                amount <= 0
+            ) {
 
                 showToast(
                     "Invalid amount",
@@ -438,76 +650,75 @@ document
             }
 
 
-            if (amount > balance) {
-
-                showToast(
-                    "Insufficient balance",
-                    "Your demo balance is too low."
-                );
-
-                return;
-
-            }
+            const account =
+                accounts[index];
 
 
-            if (account.pin !== pin) {
-
-                showToast(
-                    "Incorrect PIN",
-                    "The demo PIN is incorrect."
-                );
-
-                return;
-
-            }
+            const transactionId =
+                generateTransactionId();
 
 
-            const transactionID =
-                "QP-" +
-                Date.now() +
-                "-" +
-                Math.floor(
-                    Math.random() * 10000
-                );
+            const createdAt =
+                new Date()
+                    .toISOString();
 
 
-            const transaction = {
+            /*
+               Receiver creates the payment request.
 
-                app:
-                    "QuickPay",
+               The QR contains ONLY the
+               transaction ID.
 
-                transactionId:
-                    transactionID,
+               It does NOT contain any PIN.
+            */
 
-                status:
-                    "active",
+            const paymentRequest = {
 
-                provider:
-                    account.provider,
+                id:
+                    transactionId,
+
+                type:
+                    "payment_request",
+
+                receiver: {
+
+                    provider:
+                        account.provider,
+
+                    accountNumber:
+                        account.accountNumber,
+
+                    accountName:
+                        account.accountName
+
+                },
 
                 amount:
                     amount,
 
-                sender: {
+                fee:
+                    calculateFee(
+                        amount
+                    ),
 
-                    name:
-                        account.accountName,
-
-                    accountNumber:
-                        account.accountNumber
-
-                },
+                status:
+                    "active",
 
                 createdAt:
-                    new Date().toISOString(),
+                    createdAt,
 
-                receiver:
-                    null,
-
-                completedAt:
-                    null
+                receiverCompleted:
+                    false
 
             };
+
+
+            currentReceiveTransactionId =
+                transactionId;
+
+
+            currentPaymentRequest =
+                paymentRequest;
 
 
             try {
@@ -515,48 +726,15 @@ document
                 await database
                     .ref(
                         "transactions/" +
-                        transactionID
+                        transactionId
                     )
-                    .set(transaction);
-
-
-                const qrContainer =
-                    document.getElementById(
-                        "qrcode"
+                    .set(
+                        paymentRequest
                     );
 
 
-                qrContainer.innerHTML = "";
-
-
-                const qrData = {
-
-                    app:
-                        "QuickPay",
-
-                    transactionId:
-                        transactionID
-
-                };
-
-
-                new QRCode(
-                    qrContainer,
-                    {
-
-                        text:
-                            JSON.stringify(qrData),
-
-                        width:
-                            250,
-
-                        height:
-                            250,
-
-                        correctLevel:
-                            QRCode.CorrectLevel.M
-
-                    }
+                createQRCode(
+                    transactionId
                 );
 
 
@@ -567,52 +745,54 @@ document
 
 
                 document.getElementById(
-                    "qrAmount"
+                    "qrAccount"
                 ).textContent =
-                    amount.toLocaleString();
+                    account.accountNumber;
 
 
                 document.getElementById(
-                    "qrSender"
+                    "qrName"
                 ).textContent =
                     account.accountName;
 
 
                 document.getElementById(
-                    "qrTransaction"
+                    "qrAmount"
                 ).textContent =
-                    transactionID;
+                    formatMoney(amount);
 
 
                 document.getElementById(
-                    "senderStatus"
-                ).innerHTML =
-                    "🟡 Waiting for receiver to scan...";
+                    "receiveForm"
+                ).style.display =
+                    "none";
 
 
-                currentPayment =
-                    transaction;
+                document.getElementById(
+                    "receiveQRArea"
+                ).style.display =
+                    "block";
 
 
-                watchTransaction(
-                    transactionID
+                watchReceiveTransaction(
+                    transactionId
                 );
-
-
-                showScreen(
-                    "paymentQR"
-                );
-
-            }
-
-            catch(error) {
-
-                console.error(error);
 
 
                 showToast(
-                    "Firebase error",
-                    "Could not create payment."
+                    "QR created",
+                    "Waiting for payment."
+                );
+
+            } catch (error) {
+
+                console.error(
+                    error
+                );
+
+                showToast(
+                    "Error",
+                    "Could not create payment request."
                 );
 
             }
@@ -621,98 +801,45 @@ document
     );
 
 
-// ==========================================
-// WATCH TRANSACTION
-// ==========================================
 
-function watchTransaction(transactionID) {
+/* ==========================================
+   QR GENERATOR
+   ========================================== */
 
-    stopWatchingTransaction();
+function createQRCode(
+    transactionId
+) {
 
-
-    const reference =
-        database.ref(
-            "transactions/" +
-            transactionID
+    const container =
+        document.getElementById(
+            "qrcode"
         );
 
 
-    senderTransactionListener =
-        reference;
+    container.innerHTML = "";
 
 
-    reference.on(
-        "value",
-        snapshot => {
+    new QRCode(
+        container,
+        {
 
-            const transaction =
-                snapshot.val();
+            text:
+                transactionId,
 
+            width:
+                300,
 
-            if (!transaction) {
+            height:
+                300,
 
-                return;
+            colorDark:
+                "#000000",
 
-            }
+            colorLight:
+                "#ffffff",
 
-
-            if (
-                transaction.status ===
-                "active"
-            ) {
-
-                document.getElementById(
-                    "senderStatus"
-                ).innerHTML =
-                    "🟡 Waiting for receiver to scan...";
-
-            }
-
-
-            if (
-                transaction.status ===
-                "scanned"
-            ) {
-
-                document.getElementById(
-                    "senderStatus"
-                ).innerHTML = `
-
-                    🟢 <strong>
-                    QR CODE SCANNED
-                    </strong>
-
-                    <br><br>
-
-                    ${
-                        escapeHTML(
-                            transaction
-                                .receiverPreview
-                                ?.name ||
-                            "Receiver"
-                        )
-                    }
-                    has scanned your QR.
-
-                    <br>
-
-                    Waiting for confirmation...
-
-                `;
-
-            }
-
-
-            if (
-                transaction.status ===
-                "done"
-            ) {
-
-                showSenderCompleted(
-                    transaction
-                );
-
-            }
+            correctLevel:
+                QRCode.CorrectLevel.H
 
         }
     );
@@ -720,121 +847,10 @@ function watchTransaction(transactionID) {
 }
 
 
-// ==========================================
-// STOP LISTENER
-// ==========================================
 
-function stopWatchingTransaction() {
-
-    if (senderTransactionListener) {
-
-        senderTransactionListener.off();
-
-        senderTransactionListener =
-            null;
-
-    }
-
-}
-
-
-// ==========================================
-// SENDER COMPLETED
-// ==========================================
-
-function showSenderCompleted(transaction) {
-
-    document.getElementById(
-        "senderCompletedAmount"
-    ).textContent =
-        Number(
-            transaction.amount
-        ).toLocaleString();
-
-
-    document.getElementById(
-        "senderCompletedReceiver"
-    ).textContent =
-        transaction.receiver?.name ||
-        "Unknown";
-
-
-    document.getElementById(
-        "senderCompletedProvider"
-    ).textContent =
-        transaction.provider;
-
-
-    document.getElementById(
-        "senderCompletedAccount"
-    ).textContent =
-        maskAccount(
-            transaction.receiver?.accountNumber
-        );
-
-
-    document.getElementById(
-        "senderCompletedTransaction"
-    ).textContent =
-        transaction.transactionId;
-
-
-    document.getElementById(
-        "senderCompletedTime"
-    ).textContent =
-        formatDate(
-            transaction.completedAt
-        );
-
-
-    stopWatchingTransaction();
-
-
-    showScreen(
-        "senderCompleted"
-    );
-
-}
-
-
-// ==========================================
-// DONE BUTTON
-// ==========================================
-
-function finishQRScreen() {
-
-    /*
-       IMPORTANT:
-
-       Done DOES NOT cancel the transaction.
-
-       The transaction remains ACTIVE in Firebase.
-
-       Therefore the receiver can scan the
-       saved/shared QR later.
-    */
-
-
-    stopWatchingTransaction();
-
-
-    showToast(
-        "QR saved as active payment",
-        "The receiver can scan it later."
-    );
-
-
-    setTimeout(
-        () => showScreen("home"),
-        800
-    );
-
-}
-
-
-// ==========================================
-// GENERATE QR CANVAS / PNG
-// ==========================================
+/* ==========================================
+   QR PNG CREATOR
+   ========================================== */
 
 function getQRCanvas() {
 
@@ -865,13 +881,11 @@ function getQRCanvas() {
 
 
     /*
-       Create a larger PNG canvas.
+       Large white margin.
 
-       The QR code sits in the middle
-       with plenty of white space around it.
-
-       This makes the saved/shared image
-       much easier for cameras to scan.
+       This prevents QR cropping and
+       makes the saved/shared image
+       easier to scan.
     */
 
     const output =
@@ -880,7 +894,9 @@ function getQRCanvas() {
         );
 
 
-    const padding = 80;
+    const padding =
+        100;
+
 
     const size =
         Math.max(
@@ -890,11 +906,13 @@ function getQRCanvas() {
 
 
     output.width =
-        size + padding * 2;
+        size +
+        padding * 2;
 
 
     output.height =
-        size + padding * 2;
+        size +
+        padding * 2;
 
 
     const ctx =
@@ -903,10 +921,9 @@ function getQRCanvas() {
         );
 
 
-    // White background
-
     ctx.fillStyle =
         "#ffffff";
+
 
     ctx.fillRect(
         0,
@@ -916,16 +933,16 @@ function getQRCanvas() {
     );
 
 
-    // Put QR in the centre
-
     ctx.drawImage(
 
         original,
 
         padding,
+
         padding,
 
         size,
+
         size
 
     );
@@ -936,9 +953,10 @@ function getQRCanvas() {
 }
 
 
-// ==========================================
-// SAVE QR PNG
-// ==========================================
+
+/* ==========================================
+   SAVE QR
+   ========================================== */
 
 function saveQR() {
 
@@ -950,7 +968,7 @@ function saveQR() {
 
         showToast(
             "QR unavailable",
-            "Generate a payment QR first."
+            "Generate a QR first."
         );
 
         return;
@@ -958,75 +976,39 @@ function saveQR() {
     }
 
 
-    canvas.toBlob(
-        function(blob) {
-
-            if (!blob) {
-
-                showToast(
-                    "Save failed",
-                    "Could not create PNG."
-                );
-
-                return;
-
-            }
+    const link =
+        document.createElement(
+            "a"
+        );
 
 
-            const url =
-                URL.createObjectURL(
-                    blob
-                );
+    link.download =
+        "QuickPay-" +
+        currentReceiveTransactionId +
+        ".png";
 
 
-            const link =
-                document.createElement(
-                    "a"
-                );
+    link.href =
+        canvas.toDataURL(
+            "image/png"
+        );
 
 
-            link.href =
-                url;
+    link.click();
 
 
-            link.download =
-                currentPayment
-                    ? currentPayment.transactionId +
-                      ".png"
-                    : "QuickPay-QR.png";
-
-
-            document.body.appendChild(
-                link
-            );
-
-
-            link.click();
-
-
-            link.remove();
-
-
-            URL.revokeObjectURL(
-                url
-            );
-
-
-            showToast(
-                "QR saved",
-                "The QR PNG has been saved."
-            );
-
-        },
-        "image/png"
+    showToast(
+        "QR saved",
+        "The QR image has been downloaded."
     );
 
 }
 
 
-// ==========================================
-// SHARE QR
-// ==========================================
+
+/* ==========================================
+   SHARE QR
+   ========================================== */
 
 async function shareQR() {
 
@@ -1038,7 +1020,7 @@ async function shareQR() {
 
         showToast(
             "QR unavailable",
-            "Generate a payment QR first."
+            "Generate a QR first."
         );
 
         return;
@@ -1046,408 +1028,333 @@ async function shareQR() {
     }
 
 
-    canvas.toBlob(
-        async function(blob) {
+    try {
 
-            if (!blob) {
-
-                return;
-
-            }
-
-
-            const file =
-                new File(
-
-                    [blob],
-
-                    currentPayment
-                        ? currentPayment.transactionId +
-                          ".png"
-                        : "QuickPay-QR.png",
-
-                    {
-                        type:
-                            "image/png"
-                    }
-
-                );
+        const blob =
+            await new Promise(
+                resolve =>
+                    canvas.toBlob(
+                        resolve,
+                        "image/png"
+                    )
+            );
 
 
-            // Modern mobile browsers
-            // can open the native share sheet.
+        const file =
+            new File(
 
-            if (
-                navigator.share &&
-                navigator.canShare &&
-                navigator.canShare({
-                    files: [file]
-                })
-            ) {
+                [
+                    blob
+                ],
 
-                try {
+                "QuickPay-" +
+                currentReceiveTransactionId +
+                ".png",
 
-                    await navigator.share({
-
-                        title:
-                            "QuickPay Payment",
-
-                        text:
-                            "Scan this QuickPay QR to receive the payment.",
-
-                        files:
-                            [file]
-
-                    });
-
-
-                    return;
-
+                {
+                    type:
+                        "image/png"
                 }
 
-                catch(error) {
-
-                    if (
-                        error.name ===
-                        "AbortError"
-                    ) {
-
-                        return;
-
-                    }
-
-                }
-
-            }
+            );
 
 
-            // Fallback:
-            // download PNG.
+        if (
+            navigator.share &&
+            navigator.canShare &&
+            navigator.canShare({
+                files: [file]
+            })
+        ) {
+
+            await navigator.share({
+
+                title:
+                    "QuickPay Payment QR",
+
+                text:
+                    "Scan this QuickPay QR to make the payment.",
+
+                files:
+                    [file]
+
+            });
+
+        } else {
 
             saveQR();
 
-
             showToast(
-                "Sharing unavailable",
-                "The QR was downloaded instead."
+                "Share unavailable",
+                "QR image downloaded instead."
             );
 
-        },
-        "image/png"
-    );
+        }
+
+    } catch (error) {
+
+        if (
+            error.name !==
+            "AbortError"
+        ) {
+
+            console.error(
+                error
+            );
+
+            showToast(
+                "Share failed",
+                "Unable to share the QR image."
+            );
+
+        }
+
+    }
 
 }
 
 
-// ==========================================
-// SCANNER
-// ==========================================
 
-function startScanner() {
+/* ==========================================
+   WATCH RECEIVER TRANSACTION
+   ========================================== */
 
-    showScreen(
-        "receive"
-    );
+function watchReceiveTransaction(
+    transactionId
+) {
+
+    if (
+        transactionListener
+    ) {
+
+        transactionListener.off();
+
+    }
 
 
-    setTimeout(
-        () => {
+    transactionListener =
+        database.ref(
+            "transactions/" +
+            transactionId
+        );
 
-            if (scanner) {
+
+    transactionListener.on(
+        "value",
+        snapshot => {
+
+            const data =
+                snapshot.val();
+
+
+            if (!data) {
 
                 return;
 
             }
 
 
-            scanner =
-                new Html5Qrcode(
-                    "reader"
+            if (
+                data.status ===
+                "completed"
+            ) {
+
+                stopReceiveWatcher();
+
+
+                const received =
+                    Number(
+                        data.amount
+                    );
+
+
+                addReceivedTransaction(
+                    data
                 );
 
 
-            scanner
-                .start(
-
-                    {
-                        facingMode:
-                            "environment"
-                    },
-
-                    {
-                        fps: 10,
-
-                        qrbox: {
-                            width: 250,
-                            height: 250
-                        }
-
-                    },
-
-                    onScanSuccess,
-
-                    onScanFailure
-
-                )
-                .catch(
-                    error => {
-
-                        console.error(error);
-
-
-                        document
-                            .getElementById(
-                                "scanResult"
-                            )
-                            .innerHTML = `
-
-                                <div class="warning">
-
-                                    Camera could not be opened.
-
-                                    <br><br>
-
-                                    Please allow camera permission.
-
-                                </div>
-
-                            `;
-
-                    }
+                showReceivedSuccess(
+                    data
                 );
 
-        },
-        300
+            }
+
+        }
     );
 
 }
 
 
-// ==========================================
-// QR SCANNED
-// ==========================================
 
-async function onScanSuccess(
-    decodedText
+/* ==========================================
+   RECEIVER SUCCESS
+   ========================================== */
+
+function showReceivedSuccess(
+    data
 ) {
 
-    stopScanner();
+    document.getElementById(
+        "receivedAmount"
+    ).textContent =
+        formatMoney(
+            data.amount
+        );
+
+
+    document.getElementById(
+        "receivedFrom"
+    ).textContent =
+        data.sender &&
+        data.sender.accountName
+            ?
+        data.sender.accountName
+            :
+        "QuickPay Customer";
+
+
+    document.getElementById(
+        "receivedProvider"
+    ).textContent =
+        data.sender &&
+        data.sender.provider
+            ?
+        data.sender.provider
+            :
+        "-";
+
+
+    document.getElementById(
+        "receivedAccount"
+    ).textContent =
+        data.sender &&
+        data.sender.accountNumber
+            ?
+        data.sender.accountNumber
+            :
+        "-";
+
+
+    document.getElementById(
+        "receivedDate"
+    ).textContent =
+        formatDate(
+            data.completedAt
+        );
+
+
+    document.getElementById(
+        "receiveQRArea"
+    ).style.display =
+        "none";
+
+
+    showScreen(
+        "receiveSuccess"
+    );
+
+}
+
+
+
+/* ==========================================
+   STOP RECEIVER WATCHER
+   ========================================== */
+
+function stopReceiveWatcher() {
+
+    if (
+        transactionListener
+    ) {
+
+        transactionListener.off();
+
+        transactionListener =
+            null;
+
+    }
+
+}
+
+
+
+/* ==========================================
+   DONE RECEIVING
+   ========================================== */
+
+function finishReceive() {
+
+    showToast(
+        "QR still active",
+        "The payment request remains active."
+    );
+
+
+    showScreen(
+        "home"
+    );
+
+}
+
+
+
+/* ==========================================
+   CANCEL PAYMENT REQUEST
+   ========================================== */
+
+async function cancelReceivePayment() {
+
+    if (
+        !currentReceiveTransactionId
+    ) {
+
+        showScreen(
+            "home"
+        );
+
+        return;
+
+    }
 
 
     try {
 
-        const qr =
-            JSON.parse(
-                decodedText
-            );
-
-
-        if (
-            qr.app !== "QuickPay" ||
-            !qr.transactionId
-        ) {
-
-            showToast(
-                "Invalid QR",
-                "This is not a QuickPay QR."
-            );
-
-            return;
-
-        }
-
-
-        const transactionID =
-            qr.transactionId;
-
-
-        const snapshot =
-            await database
-                .ref(
-                    "transactions/" +
-                    transactionID
-                )
-                .once("value");
-
-
-        const transaction =
-            snapshot.val();
-
-
-        if (!transaction) {
-
-            showToast(
-                "Transaction not found",
-                "This payment does not exist."
-            );
-
-            return;
-
-        }
-
-
-        // PREVENT REUSE
-
-        if (
-            transaction.status ===
-            "done"
-        ) {
-
-            showToast(
-                "Payment already completed",
-                "This QR code has already been used."
-            );
-
-
-            setTimeout(
-                () => showScreen("home"),
-                1800
-            );
-
-
-            return;
-
-        }
-
-
-        if (
-            transaction.status ===
-            "cancelled"
-        ) {
-
-            showToast(
-                "Payment cancelled",
-                "This payment is no longer active."
-            );
-
-            return;
-
-        }
-
-
-        const accounts =
-            getAccounts();
-
-
-        const receiver =
-            accounts.find(
-                account =>
-                    account.provider ===
-                    transaction.provider
-            );
-
-
-        if (!receiver) {
-
-            showToast(
-                "Account not found",
-                `Register a ${transaction.provider} account first.`
-            );
-
-
-            setTimeout(
-                () => showScreen("home"),
-                1800
-            );
-
-
-            return;
-
-        }
-
-
-        currentPayment =
-            transaction;
-
-
-        currentReceiver =
-            receiver;
-
-
-        // MARK SCANNED
-
         await database
             .ref(
                 "transactions/" +
-                transactionID
+                currentReceiveTransactionId +
+                "/status"
             )
-            .update({
-
-                status:
-                    "scanned",
-
-                scannedAt:
-                    new Date().toISOString(),
-
-                receiverPreview: {
-
-                    name:
-                        receiver.accountName,
-
-                    provider:
-                        receiver.provider
-
-                }
-
-            });
-
-
-        // DISPLAY PAYMENT
-
-        document.getElementById(
-            "notificationAmount"
-        ).textContent =
-            Number(
-                transaction.amount
-            ).toLocaleString();
-
-
-        document.getElementById(
-            "notificationSender"
-        ).textContent =
-            transaction.sender.name;
-
-
-        document.getElementById(
-            "notificationProvider"
-        ).textContent =
-            transaction.provider;
-
-
-        document.getElementById(
-            "notificationReceiver"
-        ).textContent =
-            receiver.accountName;
-
-
-        document.getElementById(
-            "notificationAccount"
-        ).textContent =
-            maskAccount(
-                receiver.accountNumber
+            .set(
+                "cancelled"
             );
 
 
-        document.getElementById(
-            "notificationTransaction"
-        ).textContent =
-            transaction.transactionId;
+        stopReceiveWatcher();
 
 
-        showScreen(
-            "notification"
-        );
-
-    }
-
-    catch(error) {
-
-        console.error(error);
+        resetReceivePage();
 
 
         showToast(
-            "Scan error",
-            "Could not process this QR."
+            "Payment cancelled",
+            "The QR payment request was cancelled."
+        );
+
+
+        showScreen(
+            "home"
+        );
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+        showToast(
+            "Error",
+            "Could not cancel payment."
         );
 
     }
@@ -1455,16 +1362,204 @@ async function onScanSuccess(
 }
 
 
-function onScanFailure() {
+
+/* ==========================================
+   PAY FORM
+   ========================================== */
+
+document
+    .getElementById("payForm")
+    .addEventListener(
+        "submit",
+        function(event) {
+
+            event.preventDefault();
+
+
+            const index =
+                document
+                    .getElementById(
+                        "payAccount"
+                    )
+                    .value;
+
+
+            const pin =
+                document
+                    .getElementById(
+                        "payPin"
+                    )
+                    .value
+                    .trim();
+
+
+            const accounts =
+                getAccounts();
+
+
+            if (
+                index === "" ||
+                !accounts[index]
+            ) {
+
+                showToast(
+                    "Select account",
+                    "Select the account to pay from."
+                );
+
+                return;
+
+            }
+
+
+            if (!pin) {
+
+                showToast(
+                    "PIN required",
+                    "Enter your account PIN."
+                );
+
+                return;
+
+            }
+
+
+            const account =
+                accounts[index];
+
+
+            /*
+               Prototype PIN verification.
+
+               Real provider PINs should NEVER
+               be handled by QuickPay this way.
+            */
+
+            if (
+                account.demoPin !==
+                pin
+            ) {
+
+                showToast(
+                    "Incorrect PIN",
+                    "The demo account PIN is incorrect."
+                );
+
+                return;
+
+            }
+
+
+            selectedPayAccount =
+                account;
+
+
+            document.getElementById(
+                "payPin"
+            ).value = "";
+
+
+            showScreen(
+                "scanner"
+            );
+
+
+            startScanner();
+
+        }
+    );
+
+
+
+/* ==========================================
+   START SCANNER
+   ========================================== */
+
+async function startScanner() {
+
+    stopScanner();
+
+
+    scanner =
+        new Html5Qrcode(
+            "reader"
+        );
+
+
+    try {
+
+        await scanner.start(
+
+            {
+                facingMode:
+                    "environment"
+            },
+
+            {
+                fps:
+                    10,
+
+                qrbox:
+                    {
+                        width:
+                            250,
+
+                        height:
+                            250
+                    }
+
+            },
+
+            decodedText => {
+
+                handleScannedQR(
+                    decodedText
+                );
+
+            },
+
+            errorMessage => {
+
+                // Normal scanner
+                // frame errors ignored.
+
+            }
+
+        );
+
+
+        scannerRunning =
+            true;
+
+
+        document.getElementById(
+            "scanMessage"
+        ).textContent =
+            "Point the camera at the payment QR code.";
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+
+        document.getElementById(
+            "scanMessage"
+        ).textContent =
+            "Camera could not be opened. Check camera permission.";
+
+    }
 
 }
 
 
-// ==========================================
-// STOP SCANNER
-// ==========================================
 
-function stopScanner() {
+/* ==========================================
+   STOP SCANNER
+   ========================================== */
+
+async function stopScanner() {
 
     if (!scanner) {
 
@@ -1473,76 +1568,332 @@ function stopScanner() {
     }
 
 
-    scanner
-        .stop()
-        .then(
-            () => {
+    try {
 
-                scanner.clear();
+        if (
+            scannerRunning
+        ) {
 
-                scanner =
-                    null;
+            await scanner.stop();
 
-            }
-        )
-        .catch(
-            () => {
+        }
 
-                scanner =
-                    null;
+    } catch (error) {
 
-            }
+        console.log(
+            "Scanner stopped."
         );
+
+    }
+
+
+    try {
+
+        scanner.clear();
+
+    } catch (error) {
+
+        // Ignore.
+    }
+
+
+    scanner =
+        null;
+
+    scannerRunning =
+        false;
 
 }
 
 
-// ==========================================
-// CONFIRM RECEIVE
-// ==========================================
 
-async function confirmReceive() {
+/* ==========================================
+   CANCEL SCAN
+   ========================================== */
+
+function cancelScan() {
+
+    stopScanner();
+
+    showScreen(
+        "pay"
+    );
+
+}
+
+
+
+/* ==========================================
+   HANDLE QR
+   ========================================== */
+
+async function handleScannedQR(
+    transactionId
+) {
+
+    stopScanner();
+
+
+    transactionId =
+        transactionId.trim();
+
+
+    document.getElementById(
+        "scanMessage"
+    ).textContent =
+        "Checking payment request...";
+
+
+    try {
+
+        const snapshot =
+            await database
+                .ref(
+                    "transactions/" +
+                    transactionId
+                )
+                .once(
+                    "value"
+                );
+
+
+        const request =
+            snapshot.val();
+
+
+        if (!request) {
+
+            showToast(
+                "Invalid QR",
+                "This QuickPay payment request was not found."
+            );
+
+
+            showScreen(
+                "pay"
+            );
+
+
+            return;
+
+        }
+
+
+        if (
+            request.status ===
+            "completed"
+        ) {
+
+            alert(
+                "Payment already completed.\n\nThis QR cannot be used again."
+            );
+
+
+            showScreen(
+                "home"
+            );
+
+
+            return;
+
+        }
+
+
+        if (
+            request.status ===
+            "cancelled"
+        ) {
+
+            alert(
+                "Payment cancelled.\n\nThis QR is no longer active."
+            );
+
+
+            showScreen(
+                "home"
+            );
+
+
+            return;
+
+        }
+
+
+        if (
+            request.type !==
+            "payment_request"
+        ) {
+
+            showToast(
+                "Invalid payment",
+                "This QR is not a QuickPay payment request."
+            );
+
+
+            showScreen(
+                "home"
+            );
+
+
+            return;
+
+        }
+
+
+        currentPaymentRequest =
+            request;
+
+
+        showPaymentConfirmation(
+            request
+        );
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+
+        showToast(
+            "Error",
+            "Could not read payment request."
+        );
+
+
+        showScreen(
+            "home"
+        );
+
+    }
+
+}
+
+
+
+/* ==========================================
+   PAYMENT CONFIRMATION
+   ========================================== */
+
+function showPaymentConfirmation(
+    request
+) {
+
+    const amount =
+        Number(
+            request.amount
+        );
+
+
+    const fee =
+        Number(
+            request.fee ||
+            calculateFee(amount)
+        );
+
+
+    const total =
+        amount +
+        fee;
+
+
+    document.getElementById(
+        "confirmAmount"
+    ).textContent =
+        formatMoney(
+            amount
+        );
+
+
+    document.getElementById(
+        "confirmName"
+    ).textContent =
+        request.receiver.accountName;
+
+
+    document.getElementById(
+        "confirmProvider"
+    ).textContent =
+        request.receiver.provider;
+
+
+    document.getElementById(
+        "confirmAccount"
+    ).textContent =
+        request.receiver.accountNumber;
+
+
+    document.getElementById(
+        "confirmFee"
+    ).textContent =
+        formatMoney(
+            fee
+        );
+
+
+    document.getElementById(
+        "confirmTotal"
+    ).textContent =
+        formatMoney(
+            total
+        );
+
+
+    showScreen(
+        "confirmation"
+    );
+
+}
+
+
+
+/* ==========================================
+   CONFIRM PAYMENT
+   ========================================== */
+
+async function confirmPayment() {
 
     if (
-        !currentPayment ||
-        !currentReceiver
+        !currentPaymentRequest
     ) {
-
-        showScreen("home");
 
         return;
 
     }
 
 
-    const transactionID =
-        currentPayment.transactionId;
+    const request =
+        currentPaymentRequest;
+
+
+    const transactionRef =
+        database.ref(
+            "transactions/" +
+            request.id
+        );
 
 
     try {
 
-        const reference =
-            database.ref(
-                "transactions/" +
-                transactionID
-            );
-
-
         const snapshot =
-            await reference.once(
+            await transactionRef.once(
                 "value"
             );
 
 
-        const transaction =
+        const latest =
             snapshot.val();
 
 
-        if (!transaction) {
+        if (!latest) {
 
             showToast(
-                "Transaction missing",
-                "Transaction no longer exists."
+                "Error",
+                "Payment request no longer exists."
+            );
+
+            showScreen(
+                "home"
             );
 
             return;
@@ -1551,113 +1902,116 @@ async function confirmReceive() {
 
 
         if (
-            transaction.status ===
-            "done"
+            latest.status !==
+            "active"
         ) {
 
-            showToast(
-                "Already completed",
-                "This payment has already been received."
+            alert(
+                "Payment is no longer active."
             );
 
 
-            showScreen("home");
+            showScreen(
+                "home"
+            );
+
 
             return;
 
         }
 
 
-        await reference.update({
-
-            status:
-                "done",
-
-            receiver: {
-
-                name:
-                    currentReceiver.accountName,
-
-                accountNumber:
-                    currentReceiver.accountNumber,
-
-                provider:
-                    currentReceiver.provider
-
-            },
-
-            completedAt:
-                new Date().toISOString()
-
-        });
-
-
-        balance +=
+        const amount =
             Number(
-                transaction.amount
+                latest.amount
             );
 
 
-        localStorage.setItem(
-            "quickpay_balance",
-            balance
-        );
-
-
-        document.getElementById(
-            "successAmount"
-        ).textContent =
+        const fee =
             Number(
-                transaction.amount
-            ).toLocaleString();
+                latest.fee ||
+                calculateFee(
+                    amount
+                )
+            );
 
 
-        document.getElementById(
-            "successSender"
-        ).textContent =
-            transaction.sender.name;
+        const total =
+            amount +
+            fee;
 
 
-        document.getElementById(
-            "successProvider"
-        ).textContent =
-            transaction.provider;
+        const completedAt =
+            new Date()
+                .toISOString();
 
 
-        document.getElementById(
-            "successReceiver"
-        ).textContent =
-            currentReceiver.accountName;
+        const updatedData = {
+
+            ...latest,
+
+            status:
+                "completed",
+
+            sender: {
+
+                provider:
+                    selectedPayAccount.provider,
+
+                accountNumber:
+                    selectedPayAccount.accountNumber,
+
+                accountName:
+                    selectedPayAccount.accountName
+
+            },
+
+            fee:
+                fee,
+
+            total:
+                total,
+
+            completedAt:
+                completedAt
+
+        };
 
 
-        document.getElementById(
-            "successTransaction"
-        ).textContent =
-            transaction.transactionId;
+        /*
+           For the prototype we update the
+           transaction after confirmation.
 
+           A production implementation should
+           use authenticated server-side logic
+           / provider APIs to prevent fraud.
+        */
 
-        currentPayment =
-            null;
-
-
-        currentReceiver =
-            null;
-
-
-        showScreen(
-            "success"
+        await transactionRef.set(
+            updatedData
         );
 
-    }
 
-    catch(error) {
+        addSentTransaction(
+            updatedData
+        );
 
-        console.error(error);
+
+        showPaymentSuccess(
+            updatedData
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
 
 
         showToast(
-            "Payment error",
-            "Could not complete payment."
+            "Payment failed",
+            "Could not complete the payment."
         );
 
     }
@@ -1665,383 +2019,384 @@ async function confirmReceive() {
 }
 
 
-// ==========================================
-// CANCEL
-// ==========================================
 
-async function cancelPayment() {
+/* ==========================================
+   CANCEL CONFIRMATION
+   ========================================== */
 
-    if (!currentPayment) {
+function cancelConfirmation() {
 
-        showScreen("home");
+    currentPaymentRequest =
+        null;
+
+
+    showScreen(
+        "pay"
+    );
+
+}
+
+
+
+/* ==========================================
+   PAYMENT SUCCESS
+   ========================================== */
+
+function showPaymentSuccess(
+    data
+) {
+
+    document.getElementById(
+        "successAmount"
+    ).textContent =
+        formatMoney(
+            data.amount
+        );
+
+
+    document.getElementById(
+        "successName"
+    ).textContent =
+        data.receiver.accountName;
+
+
+    document.getElementById(
+        "successProvider"
+    ).textContent =
+        data.receiver.provider;
+
+
+    document.getElementById(
+        "successAccount"
+    ).textContent =
+        data.receiver.accountNumber;
+
+
+    document.getElementById(
+        "successFee"
+    ).textContent =
+        formatMoney(
+            data.fee
+        );
+
+
+    document.getElementById(
+        "successTotal"
+    ).textContent =
+        formatMoney(
+            data.total
+        );
+
+
+    showScreen(
+        "paymentSuccess"
+    );
+
+}
+
+
+
+/* ==========================================
+   TRANSACTION STORAGE
+   ========================================== */
+
+function addSentTransaction(
+    data
+) {
+
+    const transactions =
+        getTransactions();
+
+
+    const exists =
+        transactions.some(
+            transaction =>
+                transaction.id ===
+                data.id
+        );
+
+
+    if (exists) {
 
         return;
 
     }
 
 
-    try {
+    transactions.unshift({
 
-        await database
-            .ref(
-                "transactions/" +
-                currentPayment.transactionId
-            )
-            .update({
+        id:
+            data.id,
 
-                status:
-                    "cancelled",
+        direction:
+            "sent",
 
-                cancelledAt:
-                    new Date().toISOString()
+        amount:
+            data.amount,
 
-            });
+        fee:
+            data.fee,
 
-    }
+        total:
+            data.total,
 
-    catch(error) {
+        provider:
+            data.receiver.provider,
 
-        console.error(error);
+        account:
+            data.receiver.accountNumber,
 
-    }
+        name:
+            data.receiver.accountName,
 
+        date:
+            data.completedAt,
 
-    stopWatchingTransaction();
+        status:
+            "completed"
 
-
-    currentPayment =
-        null;
-
-
-    showScreen("home");
-
-}
+    });
 
 
-// ==========================================
-// TRANSACTION HISTORY
-// ==========================================
-
-async function showTransactions() {
-
-    showScreen(
-        "transactions"
-    );
-
-
-    await loadTransactions(
-        "sent"
+    saveTransactions(
+        transactions
     );
 
 }
 
 
-// ==========================================
-// LOAD TRANSACTIONS
-// ==========================================
 
-async function loadTransactions(
-    type
+function addReceivedTransaction(
+    data
 ) {
 
-    currentTransactionType =
-        type;
+    const transactions =
+        getTransactions();
 
 
-    const container =
+    const exists =
+        transactions.some(
+            transaction =>
+                transaction.id ===
+                data.id
+        );
+
+
+    if (exists) {
+
+        return;
+
+    }
+
+
+    transactions.unshift({
+
+        id:
+            data.id,
+
+        direction:
+            "received",
+
+        amount:
+            data.amount,
+
+        fee:
+            data.fee,
+
+        provider:
+            data.receiver.provider,
+
+        account:
+            data.receiver.accountNumber,
+
+        name:
+            data.receiver.accountName,
+
+        from:
+            data.sender
+                ?
+            data.sender.accountName
+                :
+            "Customer",
+
+        date:
+            data.completedAt,
+
+        status:
+            "completed"
+
+    });
+
+
+    saveTransactions(
+        transactions
+    );
+
+}
+
+
+
+/* ==========================================
+   TRANSACTION LIST
+   ========================================== */
+
+function loadTransactions() {
+
+    const list =
         document.getElementById(
             "transactionList"
         );
 
 
-    container.innerHTML =
-        '<p class="empty">Loading...</p>';
+    const transactions =
+        getTransactions()
+            .filter(
+                transaction =>
+                    transaction.direction ===
+                    transactionType
+            );
 
 
-    const accounts =
-        getAccounts();
+    if (!transactions.length) {
 
-
-    if (!accounts.length) {
-
-        container.innerHTML =
-            '<p class="empty">' +
-            'Register an account first.' +
-            '</p>';
+        list.innerHTML =
+            '<div class="empty">No transactions yet.</div>';
 
         return;
 
     }
 
 
-    try {
+    list.innerHTML =
+        transactions
+            .map(
+                transaction => {
 
-        const snapshot =
-            await database
-                .ref("transactions")
-                .once("value");
+                    if (
+                        transaction.direction ===
+                        "sent"
+                    ) {
 
+                        return `
 
-        const data =
-            snapshot.val();
+                            <div class="transaction-item">
 
+                                <div class="transaction-top">
 
-        if (!data) {
+                                    <div>
 
-            container.innerHTML =
-                '<p class="empty">' +
-                'No transactions yet.' +
-                '</p>';
+                                        <strong>
+                                            ${escapeHTML(transaction.name)}
+                                        </strong>
 
-            return;
+                                        <span>
+                                            ${escapeHTML(transaction.provider)}
+                                            •
+                                            ${escapeHTML(maskAccount(transaction.account))}
+                                        </span>
 
-        }
+                                    </div>
 
+                                    <strong class="money-out">
 
-        const transactions =
-            Object.values(data);
+                                        -
+                                        ${formatMoney(transaction.amount)}
 
+                                    </strong>
 
-        const accountNumbers =
-            accounts.map(
-                account =>
-                    account.accountNumber
-            );
+                                </div>
 
+                                <span class="transaction-status transaction-done">
+                                    Completed
+                                </span>
 
-        const accountNames =
-            accounts.map(
-                account =>
-                    account.accountName
-            );
+                                <div class="transaction-bottom">
 
+                                    <span>
+                                        ${formatDate(transaction.date)}
+                                    </span>
 
-        let filtered;
+                                    <span>
+                                        ${escapeHTML(transaction.id)}
+                                    </span>
 
+                                </div>
 
-        if (type === "sent") {
+                            </div>
 
-            filtered =
-                transactions.filter(
-                    transaction =>
+                        `;
 
-                        transaction.sender &&
-
-                        (
-                            accountNumbers.includes(
-                                transaction.sender.accountNumber
-                            ) ||
-
-                            accountNames.includes(
-                                transaction.sender.name
-                            )
-                        )
-
-                );
-
-        }
-
-        else {
-
-            filtered =
-                transactions.filter(
-                    transaction =>
-
-                        transaction.receiver &&
-
-                        (
-                            accountNumbers.includes(
-                                transaction.receiver.accountNumber
-                            ) ||
-
-                            accountNames.includes(
-                                transaction.receiver.name
-                            )
-                        )
-
-                );
-
-        }
+                    }
 
 
-        filtered.sort(
-            (a, b) =>
-                new Date(
-                    b.completedAt ||
-                    b.createdAt
-                ) -
-                new Date(
-                    a.completedAt ||
-                    a.createdAt
-                )
-        );
+                    return `
 
+                        <div class="transaction-item">
 
-        if (!filtered.length) {
+                            <div class="transaction-top">
 
-            container.innerHTML =
-                '<p class="empty">' +
-                `No ${type} transactions yet.` +
-                '</p>';
+                                <div>
 
-            return;
+                                    <strong>
+                                        ${escapeHTML(transaction.from || "Customer")}
+                                    </strong>
 
-        }
+                                    <span>
+                                        ${escapeHTML(transaction.provider)}
+                                        •
+                                        ${escapeHTML(maskAccount(transaction.account))}
+                                    </span>
 
+                                </div>
 
-        container.innerHTML =
-            "";
+                                <strong class="money-in">
 
+                                    +
+                                    ${formatMoney(transaction.amount)}
 
-        filtered.forEach(
-            transaction => {
+                                </strong>
 
-                const item =
-                    document.createElement(
-                        "div"
-                    );
+                            </div>
 
-
-                item.className =
-                    "transaction-item";
-
-
-                const isDone =
-                    transaction.status ===
-                    "done";
-
-
-                const statusClass =
-                    isDone
-                        ? "transaction-done"
-                        : "transaction-active";
-
-
-                const person =
-                    type === "sent"
-
-                        ? (
-                            transaction
-                                .receiver
-                                ?.name ||
-                            "Waiting for receiver"
-                        )
-
-                        : transaction.sender?.name;
-
-
-                const direction =
-                    type === "sent"
-                        ? "Sent to"
-                        : "Received from";
-
-
-                item.innerHTML = `
-
-                    <div class="transaction-top">
-
-                        <div>
-
-                            <strong>
-                                ${escapeHTML(
-                                    direction
-                                )}
-                            </strong>
-
-                            <span>
-                                ${escapeHTML(
-                                    person || "Unknown"
-                                )}
+                            <span class="transaction-status transaction-done">
+                                Received
                             </span>
+
+                            <div class="transaction-bottom">
+
+                                <span>
+                                    ${formatDate(transaction.date)}
+                                </span>
+
+                                <span>
+                                    ${escapeHTML(transaction.id)}
+                                </span>
+
+                            </div>
 
                         </div>
 
+                    `;
 
-                        <strong
-                            class="${
-                                type === "sent"
-                                    ? "money-out"
-                                    : "money-in"
-                            }">
-
-                            ${
-                                type === "sent"
-                                    ? "-"
-                                    : "+"
-                            }
-
-                            MWK
-                            ${Number(
-                                transaction.amount
-                            ).toLocaleString()}
-
-                        </strong>
-
-                    </div>
-
-
-                    <div class="transaction-bottom">
-
-                        <span>
-                            ${escapeHTML(
-                                transaction.provider
-                            )}
-                        </span>
-
-                        <span>
-                            ${formatDate(
-                                transaction.completedAt ||
-                                transaction.createdAt
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div class="transaction-status ${statusClass}">
-
-                        ${
-                            isDone
-                                ? "✓ Completed"
-                                : "🟡 Active"
-                        }
-
-                    </div>
-
-                `;
-
-
-                container.appendChild(
-                    item
-                );
-
-            }
-        );
-
-    }
-
-    catch(error) {
-
-        console.error(error);
-
-
-        container.innerHTML =
-            '<p class="empty">' +
-            'Could not load transactions.' +
-            '</p>';
-
-    }
+                }
+            )
+            .join("");
 
 }
 
 
-// ==========================================
-// TRANSACTION TAB
-// ==========================================
+
+/* ==========================================
+   TRANSACTION TABS
+   ========================================== */
 
 function showTransactionType(
     type
 ) {
+
+    transactionType =
+        type;
+
 
     document
         .getElementById(
@@ -2063,163 +2418,272 @@ function showTransactionType(
         );
 
 
-    loadTransactions(
-        type
-    );
+    loadTransactions();
 
 }
 
 
-// ==========================================
-// BALANCE
-// ==========================================
+
+/* ==========================================
+   BALANCE
+   ========================================== */
 
 function loadBalance() {
 
-    const saved =
-        localStorage.getItem(
-            "quickpay_balance"
+    const accounts =
+        getAccounts();
+
+
+    const balance =
+        accounts.length
+            ?
+        25000
+            :
+        0;
+
+
+    document.getElementById(
+        "homeBalance"
+    ).textContent =
+        formatMoney(
+            balance
         );
 
-
-    if (saved !== null) {
-
-        balance =
-            Number(saved);
-
-    }
+}
 
 
-    const element =
-        document.getElementById(
-            "balance"
-        );
+
+/* ==========================================
+   RESET RECEIVE
+   ========================================== */
+
+function resetReceivePage() {
+
+    stopReceiveWatcher();
 
 
-    if (element) {
+    currentReceiveTransactionId =
+        null;
 
-        element.textContent =
-            balance.toLocaleString();
 
-    }
+    currentPaymentRequest =
+        null;
+
+
+    document.getElementById(
+        "receiveForm"
+    ).reset();
+
+
+    document.getElementById(
+        "receiveForm"
+    ).style.display =
+        "flex";
+
+
+    document.getElementById(
+        "receiveQRArea"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "qrcode"
+    ).innerHTML =
+        "";
 
 }
 
 
-// ==========================================
-// HELPERS
-// ==========================================
 
-function maskAccount(account) {
+/* ==========================================
+   FEE CALCULATION
+   ========================================== */
 
-    if (!account) {
-
-        return "—";
-
-    }
-
-
-    if (account.length <= 4) {
-
-        return account;
-
-    }
-
-
-    return "•••• " +
-        account.slice(-4);
-
-}
-
-
-function formatDate(dateString) {
-
-    if (!dateString) {
-
-        return "—";
-
-    }
-
-
-    return new Date(
-        dateString
-    ).toLocaleString(
-        [],
-        {
-            dateStyle: "medium",
-            timeStyle: "short"
-        }
-    );
-
-}
-
-
-function escapeHTML(text) {
-
-    const div =
-        document.createElement(
-            "div"
-        );
-
-
-    div.textContent =
-        text;
-
-
-    return div.innerHTML;
-
-}
-
-
-// ==========================================
-// TOAST
-// ==========================================
-
-function showToast(
-    title,
-    message
+function calculateFee(
+    amount
 ) {
 
-    const toast =
-        document.getElementById(
-            "toast"
-        );
+    /*
+       Mock fee for prototype.
+
+       Later this can be replaced by
+       provider-specific fee rules.
+    */
+
+    if (
+        amount <= 0
+    ) {
+
+        return 0;
+
+    }
 
 
-    document.getElementById(
-        "toastTitle"
-    ).textContent =
-        title;
+    return 20;
+
+}
 
 
-    document.getElementById(
-        "toastMessage"
-    ).textContent =
-        message;
 
+/* ==========================================
+   ID GENERATOR
+   ========================================== */
 
-    toast.classList.add(
-        "show"
-    );
+function generateTransactionId() {
 
-
-    setTimeout(
-        () => {
-
-            toast.classList.remove(
-                "show"
-            );
-
-        },
-        3500
+    return (
+        "QP-" +
+        Math.random()
+            .toString(36)
+            .substring(
+                2,
+                9
+            )
+            .toUpperCase()
     );
 
 }
 
 
-// ==========================================
-// INITIALIZE
-// ==========================================
+
+/* ==========================================
+   MONEY FORMAT
+   ========================================== */
+
+function formatMoney(
+    amount
+) {
+
+    return (
+        "MWK " +
+        Number(
+            amount || 0
+        ).toLocaleString(
+            "en-US"
+        )
+    );
+
+}
+
+
+
+/* ==========================================
+   ACCOUNT MASK
+   ========================================== */
+
+function maskAccount(
+    account
+) {
+
+    const value =
+        String(
+            account
+        );
+
+
+    if (
+        value.length <= 4
+    ) {
+
+        return value;
+
+    }
+
+
+    return (
+        "••••" +
+        value.slice(
+            -4
+        )
+    );
+
+}
+
+
+
+/* ==========================================
+   DATE
+   ========================================== */
+
+function formatDate(
+    value
+) {
+
+    if (!value) {
+
+        return "-";
+
+    }
+
+
+    const date =
+        new Date(
+            value
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "-";
+
+    }
+
+
+    return date.toLocaleString();
+
+}
+
+
+
+/* ==========================================
+   HTML ESCAPE
+   ========================================== */
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+
+/* ==========================================
+   INITIALIZE
+   ========================================== */
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -2228,6 +2692,10 @@ document.addEventListener(
         loadAccounts();
 
         loadBalance();
+
+        loadReceiveAccounts();
+
+        loadPayAccounts();
 
     }
 );

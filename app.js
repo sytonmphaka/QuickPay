@@ -85,6 +85,17 @@ function showScreen(screenName) {
     }
 
 
+    // IMPORTANT:
+    // Reload registered accounts whenever
+    // the Send page is opened.
+
+    if (screenName === "send") {
+
+        loadSendAccounts();
+
+    }
+
+
     if (screenName === "home") {
 
         loadAccounts();

@@ -1,14 +1,13 @@
 // ==========================================
-// QUICKPAY - MOCK PAYMENT SYSTEM
+// QUICKPAY MOCK PAYMENT SYSTEM
 // ==========================================
 
-// Demo balance
 let balance = 50000;
 
-// Currently scanned payment
 let currentPayment = null;
 
-// QR scanner
+let currentReceiver = null;
+
 let scanner = null;
 
 
@@ -18,28 +17,51 @@ let scanner = null;
 
 function showScreen(screenName) {
 
-    document.querySelectorAll(".screen").forEach(screen => {
-        screen.classList.remove("active");
-    });
+    document
+        .querySelectorAll(".screen")
+        .forEach(screen => {
 
-    const screen = document.getElementById(screenName);
+            screen.classList.remove("active");
+
+        });
+
+
+    const screen =
+        document.getElementById(screenName);
+
 
     if (screen) {
+
         screen.classList.add("active");
+
     }
 
-    // Stop camera when leaving Receive screen
-    if (screenName !== "receive" && scanner) {
+
+    if (
+        screenName !== "receive" &&
+        scanner
+    ) {
+
         stopScanner();
+
     }
+
 
     if (screenName === "home") {
+
         loadAccounts();
+
+        loadBalance();
+
     }
 
+
     if (screenName === "send") {
+
         loadSendAccounts();
+
     }
+
 }
 
 
@@ -49,27 +71,49 @@ function showScreen(screenName) {
 
 function getAccounts() {
 
-    const accounts = localStorage.getItem("quickpay_accounts");
+    const accounts =
+        localStorage.getItem(
+            "quickpay_accounts"
+        );
+
 
     if (!accounts) {
+
         return [];
+
     }
 
+
     try {
+
         return JSON.parse(accounts);
-    } catch (error) {
-        console.error("Account storage error:", error);
-        return [];
+
     }
+
+    catch (error) {
+
+        console.error(
+            "Account storage error:",
+            error
+        );
+
+        return [];
+
+    }
+
 }
 
 
 function saveAccounts(accounts) {
 
     localStorage.setItem(
+
         "quickpay_accounts",
+
         JSON.stringify(accounts)
+
     );
+
 }
 
 
@@ -79,178 +123,263 @@ function saveAccounts(accounts) {
 
 document
     .getElementById("registerForm")
-    .addEventListener("submit", function(event) {
+    .addEventListener(
+        "submit",
+        function(event) {
 
-        event.preventDefault();
-
-        const provider =
-            document.getElementById("provider").value;
-
-        const accountNumber =
-            document.getElementById("accountNumber").value.trim();
-
-        const accountName =
-            document.getElementById("accountName").value.trim();
-
-        const pin =
-            document.getElementById("pin").value.trim();
+            event.preventDefault();
 
 
-        if (!provider || !accountNumber || !accountName || !pin) {
+            const provider =
+                document.getElementById(
+                    "provider"
+                ).value;
 
-            alert("Please complete all fields.");
 
-            return;
+            const accountNumber =
+                document.getElementById(
+                    "accountNumber"
+                ).value.trim();
+
+
+            const accountName =
+                document.getElementById(
+                    "accountName"
+                ).value.trim();
+
+
+            const pin =
+                document.getElementById(
+                    "pin"
+                ).value.trim();
+
+
+            if (
+                !provider ||
+                !accountNumber ||
+                !accountName ||
+                !pin
+            ) {
+
+                showToast(
+                    "Missing information",
+                    "Please complete all fields."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                !/^\d{4}$/.test(pin)
+            ) {
+
+                showToast(
+                    "Invalid PIN",
+                    "Demo PIN must contain 4 digits."
+                );
+
+                return;
+
+            }
+
+
+            const accounts =
+                getAccounts();
+
+
+            const account = {
+
+                id:
+                    "ACC-" +
+                    Date.now(),
+
+                provider:
+                    provider,
+
+                accountNumber:
+                    accountNumber,
+
+                accountName:
+                    accountName,
+
+                pin:
+                    pin
+
+            };
+
+
+            accounts.push(account);
+
+            saveAccounts(accounts);
+
+
+            showToast(
+                "Account registered",
+                `${provider} account saved successfully.`
+            );
+
+
+            document
+                .getElementById(
+                    "registerForm"
+                )
+                .reset();
+
+
+            setTimeout(
+                () => {
+
+                    showScreen("home");
+
+                },
+                700
+            );
+
         }
-
-
-        if (pin.length !== 4) {
-
-            alert("Demo PIN must contain 4 digits.");
-
-            return;
-        }
-
-
-        const accounts = getAccounts();
-
-
-        const account = {
-
-            id: "ACC-" + Date.now(),
-
-            provider: provider,
-
-            accountNumber: accountNumber,
-
-            accountName: accountName,
-
-            // Demo only
-            pin: pin
-
-        };
-
-
-        accounts.push(account);
-
-        saveAccounts(accounts);
-
-
-        alert(
-            "Account registered successfully!\n\n" +
-            provider + "\n" +
-            accountName
-        );
-
-
-        // Clear form
-        document.getElementById("registerForm").reset();
-
-
-        loadAccounts();
-
-        showScreen("home");
-    });
+    );
 
 
 // ==========================================
-// DISPLAY REGISTERED ACCOUNTS
+// DISPLAY ACCOUNTS
 // ==========================================
 
 function loadAccounts() {
 
-    const accounts = getAccounts();
+    const accounts =
+        getAccounts();
+
 
     const container =
-        document.getElementById("accountsList");
+        document.getElementById(
+            "accountsList"
+        );
 
 
-    if (accounts.length === 0) {
+    if (
+        accounts.length === 0
+    ) {
 
         container.innerHTML =
-            '<p class="empty">No accounts registered yet.</p>';
+            '<p class="empty">' +
+            'No accounts registered yet.' +
+            '</p>';
 
         return;
+
     }
 
 
     container.innerHTML = "";
 
 
-    accounts.forEach(account => {
+    accounts.forEach(
+        account => {
 
-        const item =
-            document.createElement("div");
-
-        item.className = "account-item";
-
-
-        item.innerHTML = `
-
-            <strong>${escapeHTML(account.provider)}</strong>
-
-            <span>
-                ${escapeHTML(account.accountName)}
-            </span>
-
-            <span>
-                ${maskAccount(account.accountNumber)}
-            </span>
-
-        `;
+            const item =
+                document.createElement(
+                    "div"
+                );
 
 
-        container.appendChild(item);
+            item.className =
+                "account-item";
 
-    });
+
+            item.innerHTML = `
+
+                <strong>
+                    ${escapeHTML(account.provider)}
+                </strong>
+
+                <span>
+                    ${escapeHTML(account.accountName)}
+                </span>
+
+                <span>
+                    ${maskAccount(account.accountNumber)}
+                </span>
+
+            `;
+
+
+            container.appendChild(item);
+
+        }
+    );
+
 }
 
 
 // ==========================================
-// LOAD ACCOUNTS INTO SEND DROPDOWN
+// LOAD SEND ACCOUNTS
 // ==========================================
 
 function loadSendAccounts() {
 
     const select =
-        document.getElementById("sendAccount");
+        document.getElementById(
+            "sendAccount"
+        );
 
-    const accounts = getAccounts();
+
+    const accounts =
+        getAccounts();
 
 
     select.innerHTML =
         '<option value="">Select account</option>';
 
 
-    if (accounts.length === 0) {
+    if (
+        accounts.length === 0
+    ) {
 
         const option =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
+
 
         option.textContent =
             "No registered accounts";
 
+
         option.disabled = true;
+
 
         select.appendChild(option);
 
+
         return;
+
     }
 
 
-    accounts.forEach(account => {
+    accounts.forEach(
+        account => {
 
-        const option =
-            document.createElement("option");
+            const option =
+                document.createElement(
+                    "option"
+                );
 
-        option.value = account.id;
 
-        option.textContent =
-            `${account.provider} - ${maskAccount(account.accountNumber)}`;
+            option.value =
+                account.id;
 
-        select.appendChild(option);
 
-    });
+            option.textContent =
+                `${account.provider} - ` +
+                `${maskAccount(account.accountNumber)}`;
+
+
+            select.appendChild(option);
+
+        }
+    );
+
 }
 
 
@@ -260,147 +389,208 @@ function loadSendAccounts() {
 
 document
     .getElementById("sendForm")
-    .addEventListener("submit", function(event) {
+    .addEventListener(
+        "submit",
+        function(event) {
 
-        event.preventDefault();
-
-
-        const accountID =
-            document.getElementById("sendAccount").value;
-
-        const amount =
-            Number(document.getElementById("amount").value);
-
-        const pin =
-            document.getElementById("sendPin").value.trim();
+            event.preventDefault();
 
 
-        if (!accountID) {
+            const accountID =
+                document.getElementById(
+                    "sendAccount"
+                ).value;
 
-            alert("Please select an account.");
 
-            return;
+            const amount =
+                Number(
+                    document.getElementById(
+                        "amount"
+                    ).value
+                );
+
+
+            const pin =
+                document.getElementById(
+                    "sendPin"
+                ).value.trim();
+
+
+            if (!accountID) {
+
+                showToast(
+                    "Select account",
+                    "Choose the account to send from."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                !amount ||
+                amount <= 0
+            ) {
+
+                showToast(
+                    "Invalid amount",
+                    "Enter a valid payment amount."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                amount > balance
+            ) {
+
+                showToast(
+                    "Insufficient balance",
+                    "Your demo balance is too low."
+                );
+
+                return;
+
+            }
+
+
+            const accounts =
+                getAccounts();
+
+
+            const account =
+                accounts.find(
+                    acc =>
+                        acc.id === accountID
+                );
+
+
+            if (!account) {
+
+                showToast(
+                    "Account error",
+                    "The selected account was not found."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                account.pin !== pin
+            ) {
+
+                showToast(
+                    "Incorrect PIN",
+                    "The demo PIN is incorrect."
+                );
+
+                return;
+
+            }
+
+
+            const transactionID =
+                "QP-" +
+                Date.now();
+
+
+            const payment = {
+
+                app:
+                    "QuickPay",
+
+                version:
+                    "1.0",
+
+                transactionID:
+                    transactionID,
+
+                provider:
+                    account.provider,
+
+                amount:
+                    amount,
+
+                sender:
+                    account.accountName,
+
+                senderAccount:
+                    account.accountNumber,
+
+                timestamp:
+                    new Date().toISOString()
+
+            };
+
+
+            const qrContainer =
+                document.getElementById(
+                    "qrcode"
+                );
+
+
+            qrContainer.innerHTML = "";
+
+
+            new QRCode(
+                qrContainer,
+                {
+
+                    text:
+                        JSON.stringify(payment),
+
+                    width:
+                        220,
+
+                    height:
+                        220,
+
+                    correctLevel:
+                        QRCode.CorrectLevel.M
+
+                }
+            );
+
+
+            document.getElementById(
+                "qrProvider"
+            ).textContent =
+                account.provider;
+
+
+            document.getElementById(
+                "qrAmount"
+            ).textContent =
+                amount.toLocaleString();
+
+
+            document.getElementById(
+                "qrSender"
+            ).textContent =
+                account.accountName;
+
+
+            showToast(
+                "Payment QR created",
+                `MWK ${amount.toLocaleString()} ready to scan.`
+            );
+
+
+            showScreen(
+                "paymentQR"
+            );
+
         }
-
-
-        if (!amount || amount <= 0) {
-
-            alert("Please enter a valid amount.");
-
-            return;
-        }
-
-
-        if (amount > balance) {
-
-            alert("Insufficient demo balance.");
-
-            return;
-        }
-
-
-        const accounts = getAccounts();
-
-        const account =
-            accounts.find(acc => acc.id === accountID);
-
-
-        if (!account) {
-
-            alert("Account could not be found.");
-
-            return;
-        }
-
-
-        // Check demo PIN
-        if (account.pin !== pin) {
-
-            alert("Incorrect demo PIN.");
-
-            return;
-        }
-
-
-        // Create transaction ID
-        const transactionID =
-            "QP-" +
-            new Date()
-                .toISOString()
-                .replace(/\D/g, "")
-                .slice(0, 14);
-
-
-        // ======================================
-        // PAYMENT DATA
-        // ======================================
-
-        const payment = {
-
-            app: "QuickPay",
-
-            version: "1.0",
-
-            transactionID: transactionID,
-
-            provider: account.provider,
-
-            amount: amount,
-
-            sender: account.accountName,
-
-            senderAccount: account.accountNumber,
-
-            timestamp: new Date().toISOString()
-
-        };
-
-
-        // ======================================
-        // CREATE QR CODE
-        // ======================================
-
-        const qrContainer =
-            document.getElementById("qrcode");
-
-        qrContainer.innerHTML = "";
-
-
-        new QRCode(qrContainer, {
-
-            text: JSON.stringify(payment),
-
-            width: 220,
-
-            height: 220,
-
-            correctLevel: QRCode.CorrectLevel.M
-
-        });
-
-
-        // Display information
-        document.getElementById("qrProvider")
-            .textContent = account.provider;
-
-
-        document.getElementById("qrAmount")
-            .textContent =
-            amount.toLocaleString();
-
-
-        document.getElementById("qrSender")
-            .textContent =
-            account.accountName;
-
-
-        showScreen("paymentQR");
-
-    });
+    );
 
 
 // ==========================================
-// START QR SCANNER
+// START SCANNER
 // ==========================================
 
 function startScanner() {
@@ -408,66 +598,86 @@ function startScanner() {
     showScreen("receive");
 
 
-    setTimeout(() => {
+    setTimeout(
+        () => {
 
-        if (scanner) {
-            return;
-        }
+            if (scanner) {
 
+                return;
 
-        scanner =
-            new Html5Qrcode("reader");
-
-
-        const config = {
-
-            fps: 10,
-
-            qrbox: {
-                width: 250,
-                height: 250
             }
 
-        };
+
+            scanner =
+                new Html5Qrcode(
+                    "reader"
+                );
 
 
-        scanner.start(
+            const config = {
 
-            {
-                facingMode: "environment"
-            },
+                fps: 10,
 
-            config,
+                qrbox: {
 
-            onScanSuccess,
+                    width: 250,
 
-            onScanFailure
+                    height: 250
 
-        )
-        .catch(error => {
+                }
 
-            console.error(error);
+            };
 
-            document.getElementById("scanResult")
-                .innerHTML = `
 
-                    <div class="warning">
+            scanner
+                .start(
 
-                        Camera could not be opened.
+                    {
+                        facingMode:
+                            "environment"
+                    },
 
-                        <br><br>
+                    config,
 
-                        Make sure camera permission
-                        is allowed and the page is
-                        running on HTTPS.
+                    onScanSuccess,
 
-                    </div>
+                    onScanFailure
 
-                `;
+                )
 
-        });
+                .catch(
+                    error => {
 
-    }, 300);
+                        console.error(
+                            error
+                        );
+
+
+                        document
+                            .getElementById(
+                                "scanResult"
+                            )
+                            .innerHTML = `
+
+                                <div class="warning">
+
+                                    Camera could not be opened.
+
+                                    <br><br>
+
+                                    Please allow camera
+                                    permission.
+
+                                </div>
+
+                            `;
+
+                    }
+                );
+
+        },
+        300
+    );
 
 }
 
@@ -476,9 +686,15 @@ function startScanner() {
 // QR SCAN SUCCESS
 // ==========================================
 
-function onScanSuccess(decodedText, decodedResult) {
+function onScanSuccess(
+    decodedText,
+    decodedResult
+) {
 
-    console.log("QR detected:", decodedText);
+    console.log(
+        "QR detected:",
+        decodedText
+    );
 
 
     stopScanner();
@@ -487,59 +703,171 @@ function onScanSuccess(decodedText, decodedResult) {
     try {
 
         const payment =
-            JSON.parse(decodedText);
+            JSON.parse(
+                decodedText
+            );
 
 
-        // Verify this is our QR
-        if (payment.app !== "QuickPay") {
+        if (
+            payment.app !==
+            "QuickPay"
+        ) {
 
-            alert("This is not a QuickPay payment QR.");
+            showToast(
+                "Invalid QR",
+                "This is not a QuickPay payment QR."
+            );
 
             return;
+
         }
 
 
-        if (!payment.amount || !payment.provider) {
+        if (
+            !payment.amount ||
+            !payment.provider ||
+            !payment.sender
+        ) {
 
-            alert("Invalid payment QR.");
+            showToast(
+                "Invalid payment",
+                "The payment QR is incomplete."
+            );
 
             return;
+
         }
 
 
-        currentPayment = payment;
+        // ======================================
+        // FIND RECEIVER ACCOUNT
+        // ======================================
+
+        const accounts =
+            getAccounts();
 
 
-        // Display confirmation
-        document.getElementById("confirmProvider")
-            .textContent =
-            payment.provider;
+        const receiver =
+            accounts.find(
+                account =>
+                    account.provider ===
+                    payment.provider
+            );
 
 
-        document.getElementById("confirmAmount")
-            .textContent =
-            Number(payment.amount).toLocaleString();
+        if (!receiver) {
+
+            showToast(
+
+                "Account not found",
+
+                `No ${payment.provider} account is registered on this phone.`
+
+            );
 
 
-        document.getElementById("confirmSender")
-            .textContent =
+            setTimeout(
+                () => {
+
+                    showScreen(
+                        "home"
+                    );
+
+                },
+                1800
+            );
+
+
+            return;
+
+        }
+
+
+        currentPayment =
+            payment;
+
+
+        currentReceiver =
+            receiver;
+
+
+        // ======================================
+        // PAYMENT NOTIFICATION
+        // ======================================
+
+        document.getElementById(
+            "notificationAmount"
+        ).textContent =
+            Number(
+                payment.amount
+            ).toLocaleString();
+
+
+        document.getElementById(
+            "notificationSender"
+        ).textContent =
             payment.sender;
 
 
-        document.getElementById("confirmTransaction")
-            .textContent =
+        document.getElementById(
+            "notificationProvider"
+        ).textContent =
+            payment.provider;
+
+
+        document.getElementById(
+            "notificationReceiver"
+        ).textContent =
+            receiver.accountName;
+
+
+        document.getElementById(
+            "notificationAccount"
+        ).textContent =
+            maskAccount(
+                receiver.accountNumber
+            );
+
+
+        document.getElementById(
+            "notificationTransaction"
+        ).textContent =
             payment.transactionID;
 
 
-        showScreen("confirm");
+        // Small notification popup
+        showToast(
+
+            "Payment received",
+
+            `MWK ${Number(payment.amount).toLocaleString()} from ${payment.sender}`
+
+        );
+
+
+        // Open full notification
+        setTimeout(
+            () => {
+
+                showScreen(
+                    "notification"
+                );
+
+            },
+            600
+        );
 
     }
 
     catch (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
 
-        alert(
+
+        showToast(
+            "Scan error",
             "The QR code could not be understood."
         );
 
@@ -554,55 +882,70 @@ function onScanSuccess(decodedText, decodedResult) {
 
 function onScanFailure(error) {
 
-    // Ignore continuous scanning errors.
-    // This function intentionally does nothing.
+    // Continuous scanner errors are ignored.
+
 }
 
 
 // ==========================================
-// STOP CAMERA
+// STOP SCANNER
 // ==========================================
 
 function stopScanner() {
 
     if (!scanner) {
+
         return;
+
     }
 
 
-    scanner.stop()
-        .then(() => {
+    scanner
+        .stop()
 
-            scanner.clear();
+        .then(
+            () => {
 
-            scanner = null;
+                scanner.clear();
 
-        })
-        .catch(error => {
+                scanner = null;
 
-            console.log(
-                "Scanner stop error:",
-                error
-            );
+            }
+        )
 
-            scanner = null;
+        .catch(
+            error => {
 
-        });
+                console.log(
+                    "Scanner stop error:",
+                    error
+                );
+
+                scanner = null;
+
+            }
+        );
 
 }
 
 
 // ==========================================
-// COMPLETE MOCK PAYMENT
+// ACCEPT PAYMENT NOTIFICATION
 // ==========================================
 
-function completePayment() {
+function acceptNotification() {
 
-    if (!currentPayment) {
+    if (
+        !currentPayment ||
+        !currentReceiver
+    ) {
 
-        alert("No payment available.");
+        showScreen(
+            "home"
+        );
 
         return;
+
     }
 
 
@@ -611,103 +954,156 @@ function completePayment() {
 
 
     // ======================================
-    // MOCK TRANSACTION
+    // MOCK RECEIVING
     // ======================================
 
-    balance += Number(payment.amount);
+    balance +=
+        Number(
+            payment.amount
+        );
 
 
-    // Save new balance
     localStorage.setItem(
         "quickpay_balance",
         balance
     );
 
 
-    // Display success information
-    document.getElementById("successAmount")
-        .textContent =
-        Number(payment.amount).toLocaleString();
+    // ======================================
+    // SHOW SUCCESS
+    // ======================================
+
+    document.getElementById(
+        "successAmount"
+    ).textContent =
+        Number(
+            payment.amount
+        ).toLocaleString();
 
 
-    document.getElementById("successProvider")
-        .textContent =
+    document.getElementById(
+        "successProvider"
+    ).textContent =
         payment.provider;
 
 
-    document.getElementById("successTransaction")
-        .textContent =
+    document.getElementById(
+        "successTransaction"
+    ).textContent =
         payment.transactionID;
 
 
-    showScreen("success");
+    showToast(
+        "Payment confirmed",
+        `MWK ${Number(payment.amount).toLocaleString()} added to your demo balance.`
+    );
 
 
+    // Clear transaction
     currentPayment = null;
+
+    currentReceiver = null;
+
+
+    // ======================================
+    // GO HOME DIRECTLY
+    // ======================================
+
+    setTimeout(
+        () => {
+
+            showScreen(
+                "home"
+            );
+
+        },
+        800
+    );
 
 }
 
 
 // ==========================================
-// LOAD BALANCE
+// BALANCE
 // ==========================================
 
 function loadBalance() {
 
     const savedBalance =
-        localStorage.getItem("quickpay_balance");
+        localStorage.getItem(
+            "quickpay_balance"
+        );
 
 
-    if (savedBalance !== null) {
+    if (
+        savedBalance !== null
+    ) {
 
         balance =
-            Number(savedBalance);
+            Number(
+                savedBalance
+            );
 
     }
 
 
-    document.getElementById("balance")
-        .textContent =
+    document.getElementById(
+        "balance"
+    ).textContent =
         balance.toLocaleString();
 
 }
 
 
 // ==========================================
-// MASK ACCOUNT NUMBER
+// MASK ACCOUNT
 // ==========================================
 
-function maskAccount(account) {
+function maskAccount(
+    account
+) {
 
     if (!account) {
+
         return "";
+
     }
 
 
-    if (account.length <= 4) {
+    if (
+        account.length <= 4
+    ) {
+
         return account;
+
     }
 
 
-    const visible =
-        account.slice(-4);
-
-
-    return "•••• " + visible;
+    return (
+        "•••• " +
+        account.slice(-4)
+    );
 
 }
 
 
 // ==========================================
-// BASIC HTML ESCAPING
+// HTML ESCAPING
 // ==========================================
 
-function escapeHTML(text) {
+function escapeHTML(
+    text
+) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    div.textContent = text;
+
+    div.textContent =
+        text;
+
 
     return div.innerHTML;
 
@@ -715,7 +1111,53 @@ function escapeHTML(text) {
 
 
 // ==========================================
-// INITIALIZE APP
+// TOAST NOTIFICATION
+// ==========================================
+
+function showToast(
+    title,
+    message
+) {
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+
+    document.getElementById(
+        "toastTitle"
+    ).textContent =
+        title;
+
+
+    document.getElementById(
+        "toastMessage"
+    ).textContent =
+        message;
+
+
+    toast.classList.add(
+        "show"
+    );
+
+
+    setTimeout(
+        () => {
+
+            toast.classList.remove(
+                "show"
+            );
+
+        },
+        3500
+    );
+
+}
+
+
+// ==========================================
+// INITIALIZE
 // ==========================================
 
 document.addEventListener(

@@ -441,7 +441,7 @@ header {
 
 
 /* ==========================================
-   BACK BUTTON
+   BACK
    ========================================== */
 
 .back {
@@ -527,7 +527,7 @@ select:focus {
 
 
 /* ==========================================
-   PRIMARY BUTTON
+   BUTTONS
    ========================================== */
 
 .primary {
@@ -550,9 +550,6 @@ select:focus {
 
     font-weight: 700;
 
-    transition:
-        background 0.15s;
-
 }
 
 
@@ -562,18 +559,6 @@ select:focus {
 
 }
 
-
-.primary:active {
-
-    transform:
-        translateY(1px);
-
-}
-
-
-/* ==========================================
-   SECONDARY BUTTON
-   ========================================== */
 
 .secondary {
 
@@ -600,30 +585,7 @@ select:focus {
 
 
 /* ==========================================
-   WARNING
-   ========================================== */
-
-.warning {
-
-    margin-top: 14px;
-
-    padding: 12px;
-
-    border-radius: 10px;
-
-    background: #fff6df;
-
-    color: #755600;
-
-    font-size: 12px;
-
-    line-height: 1.5;
-
-}
-
-
-/* ==========================================
-   QR CONTAINER
+   QR
    ========================================== */
 
 .qr-container {
@@ -634,10 +596,10 @@ select:focus {
 
     justify-content: center;
 
-    padding: 20px;
+    padding: 35px;
 
     margin:
-        10px 0 20px;
+        15px 0 20px;
 
     background: white;
 
@@ -657,6 +619,10 @@ select:focus {
 
     align-items: center;
 
+    padding: 20px;
+
+    background: white;
+
 }
 
 
@@ -665,6 +631,73 @@ select:focus {
     max-width: 100%;
 
     height: auto;
+
+}
+
+
+/* ==========================================
+   QR BUTTONS
+   ========================================== */
+
+.qr-buttons {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 15px;
+
+}
+
+
+.qr-buttons .secondary {
+
+    margin-top: 0;
+
+}
+
+
+.done-button {
+
+    width: 100%;
+
+    padding: 15px;
+
+    margin-top: 10px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: #087f5b;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+}
+
+
+.cancel-button {
+
+    width: 100%;
+
+    padding: 12px;
+
+    margin-top: 10px;
+
+    border: none;
+
+    background: transparent;
+
+    color: #d93025;
+
+    font-size: 14px;
 
 }
 
@@ -712,110 +745,7 @@ select:focus {
 
 
 /* ==========================================
-   SENDER STATUS
-   ========================================== */
-
-.waiting {
-
-    margin-top: 15px;
-
-    padding: 14px;
-
-    border-radius: 11px;
-
-    background: #fff6df;
-
-    color: #725400;
-
-    text-align: center;
-
-    font-size: 13px;
-
-    line-height: 1.5;
-
-}
-
-
-/* ==========================================
-   QR ACTIONS
-   ========================================== */
-
-.qr-buttons {
-
-    display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap: 10px;
-
-    margin-top: 15px;
-
-}
-
-
-.qr-buttons .secondary {
-
-    margin-top: 0;
-
-}
-
-
-.done-button {
-
-    width: 100%;
-
-    padding: 15px;
-
-    margin-top: 10px;
-
-    border: none;
-
-    border-radius: 10px;
-
-    background: #087f5b;
-
-    color: white;
-
-    font-size: 16px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
-}
-
-
-.done-button:hover {
-
-    background: #066c4d;
-
-}
-
-
-.cancel-button {
-
-    width: 100%;
-
-    padding: 12px;
-
-    margin-top: 10px;
-
-    border: none;
-
-    background: transparent;
-
-    color: #d93025;
-
-    font-size: 14px;
-
-    cursor: pointer;
-
-}
-
-
-/* ==========================================
-   CAMERA / SCANNER
+   SCANNER
    ========================================== */
 
 #reader {
@@ -843,26 +773,153 @@ select:focus {
 }
 
 
-#reader img {
+.waiting {
 
-    max-width: 100%;
+    margin-top: 15px;
+
+    padding: 14px;
+
+    border-radius: 11px;
+
+    background: #fff6df;
+
+    color: #725400;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    line-height: 1.5;
 
 }
 
 
 /* ==========================================
-   SCAN RESULT
+   CONFIRMATION / SUCCESS
    ========================================== */
 
-#scanResult {
+.success-page {
 
-    margin-top: 12px;
+    text-align: center;
+
+    padding-top: 15px;
+
+}
+
+
+.big-success {
+
+    width: 80px;
+
+    height: 80px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin: 0 auto 20px;
+
+    border-radius: 50%;
+
+    background: #e5f7ef;
+
+    color: #087f5b;
+
+    font-size: 35px;
+
+    font-weight: bold;
+
+}
+
+
+.success-page h2 {
+
+    color: #087f5b;
+
+}
+
+
+.success-page p {
+
+    color: #737d79;
+
+    margin-top: 5px;
+
+}
+
+
+.success-amount {
+
+    margin: 25px 0;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    color: #6d7773;
+
+}
+
+
+.success-amount span {
+
+    display: block;
+
+    font-size: 36px;
+
+    font-weight: 800;
+
+    color: #087f5b;
+
+    margin-top: 5px;
+
+}
+
+
+.success-info {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 12px;
+
+    text-align: left;
+
+    background: #f5f8f7;
+
+    border-radius: 14px;
+
+    padding: 16px;
+
+}
+
+
+.success-info span {
+
+    color: #7b8581;
+
+    font-size: 12px;
+
+}
+
+
+.success-info strong {
+
+    text-align: right;
+
+    font-size: 13px;
+
+    word-break: break-word;
 
 }
 
 
 /* ==========================================
-   NOTIFICATION PAGE
+   RECEIVED NOTIFICATION
    ========================================== */
 
 .notification-page {
@@ -925,6 +982,8 @@ select:focus {
     margin:
         22px 0;
 
+    text-align: center;
+
     font-size: 14px;
 
     color: #6e7874;
@@ -954,6 +1013,8 @@ select:focus {
     border-radius: 12px;
 
     background: #f5f8f7;
+
+    text-align: center;
 
 }
 
@@ -1034,128 +1095,6 @@ select:focus {
 
 
 /* ==========================================
-   SUCCESS PAGE
-   ========================================== */
-
-.success-page {
-
-    text-align: center;
-
-    padding-top: 25px;
-
-}
-
-
-.big-success {
-
-    width: 80px;
-
-    height: 80px;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    margin: 0 auto 20px;
-
-    border-radius: 50%;
-
-    background: #e5f7ef;
-
-    color: #087f5b;
-
-    font-size: 40px;
-
-    font-weight: bold;
-
-}
-
-
-.success-page h2 {
-
-    color: #087f5b;
-
-}
-
-
-.success-page p {
-
-    color: #737d79;
-
-    margin-top: 5px;
-
-}
-
-
-.success-amount {
-
-    margin: 25px 0;
-
-    font-size: 14px;
-
-    color: #6d7773;
-
-}
-
-
-.success-amount span {
-
-    display: block;
-
-    font-size: 36px;
-
-    font-weight: 800;
-
-    color: #087f5b;
-
-    margin-top: 5px;
-
-}
-
-
-.success-info {
-
-    display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap: 12px;
-
-    text-align: left;
-
-    background: #f5f8f7;
-
-    border-radius: 14px;
-
-    padding: 16px;
-
-}
-
-
-.success-info span {
-
-    color: #7b8581;
-
-    font-size: 12px;
-
-}
-
-
-.success-info strong {
-
-    text-align: right;
-
-    font-size: 13px;
-
-    word-break: break-word;
-
-}
-
-
-/* ==========================================
    TRANSACTIONS
    ========================================== */
 
@@ -1187,8 +1126,6 @@ select:focus {
     border-radius: 8px;
 
     background: transparent;
-
-    cursor: pointer;
 
     font-weight: bold;
 
@@ -1332,7 +1269,7 @@ select:focus {
 
 
 /* ==========================================
-   TOAST NOTIFICATION
+   TOAST
    ========================================== */
 
 .toast {
@@ -1408,26 +1345,6 @@ select:focus {
     background: #087f5b;
 
     font-weight: bold;
-
-}
-
-
-.toast strong {
-
-    display: block;
-
-    font-size: 14px;
-
-}
-
-
-.toast p {
-
-    margin-top: 3px;
-
-    color: #d7dfdc;
-
-    font-size: 12px;
 
 }
 
@@ -1539,14 +1456,6 @@ select:focus {
         border-radius: 18px;
 
         overflow: hidden;
-
-    }
-
-
-    .screen {
-
-        min-height:
-            calc(100vh - 135px);
 
     }
 

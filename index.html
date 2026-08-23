@@ -1,113 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickPay</title>
-    <link rel="stylesheet" href="style.css">
 
-    <!-- QR Code Generator -->
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color"
+          content="#087f5b">
+
+    <title>QuickPay</title>
+
+    <link rel="stylesheet"
+          href="style.css">
+
+    <!-- QR CODE GENERATOR -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <!-- QR Scanner -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- QR CODE SCANNER -->
+    <script src="https://unpkg.com/html5-qrcode"
+            type="text/javascript"></script>
+
 </head>
 
 <body>
 
 <div class="app">
 
+    <!-- ============================= -->
     <!-- HEADER -->
+    <!-- ============================= -->
+
     <header>
+
         <div class="logo">
-            <div class="logo-icon">Q</div>
-            <div>
-                <h1>QuickPay</h1>
-                <span>Simple. Fast. Connected.</span>
+
+            <div class="logo-icon">
+                Q
             </div>
+
+            <div>
+
+                <h1>QuickPay</h1>
+
+                <span>
+                    Simple. Fast. Connected.
+                </span>
+
+            </div>
+
         </div>
+
     </header>
 
 
+    <!-- ============================= -->
     <!-- HOME -->
-    <section id="home" class="screen active">
+    <!-- ============================= -->
+
+    <section id="home"
+             class="screen active">
 
         <div class="welcome">
-            <h2>Welcome to QuickPay</h2>
-            <p>Send and receive payments using a simple QR code.</p>
+
+            <h2>
+                Welcome to QuickPay
+            </h2>
+
+            <p>
+                Send and receive payments using a simple QR code.
+            </p>
+
         </div>
 
+
         <div class="balance-card">
-            <span>Demo Wallet Balance</span>
-            <strong>MWK <span id="balance">50,000</span></strong>
-            <small>Demo account</small>
+
+            <span>
+                Demo Wallet Balance
+            </span>
+
+            <strong>
+                MWK
+                <span id="balance">
+                    50,000
+                </span>
+            </strong>
+
+            <small>
+                Demo account
+            </small>
+
         </div>
+
+
+        <!-- ACTIONS -->
 
         <div class="main-actions">
 
-            <button class="action receive" onclick="showScreen('receive')">
-                <div class="action-icon">↓</div>
-                <div>
-                    <strong>Receive</strong>
-                    <small>Scan a payment QR</small>
+            <button
+                class="action receive"
+                onclick="startScanner()">
+
+                <div class="action-icon">
+                    ↓
                 </div>
+
+                <div>
+
+                    <strong>
+                        Receive
+                    </strong>
+
+                    <small>
+                        Scan a payment QR
+                    </small>
+
+                </div>
+
             </button>
 
-            <button class="action send" onclick="showScreen('send')">
-                <div class="action-icon">↑</div>
-                <div>
-                    <strong>Send</strong>
-                    <small>Create a payment QR</small>
+
+            <button
+                class="action send"
+                onclick="showScreen('send')">
+
+                <div class="action-icon">
+                    ↑
                 </div>
+
+                <div>
+
+                    <strong>
+                        Send
+                    </strong>
+
+                    <small>
+                        Create a payment QR
+                    </small>
+
+                </div>
+
             </button>
 
-            <button class="action register" onclick="showScreen('register')">
-                <div class="action-icon">+</div>
-                <div>
-                    <strong>Register Account</strong>
-                    <small>Add TNM, Airtel or bank account</small>
+
+            <button
+                class="action register"
+                onclick="showScreen('register')">
+
+                <div class="action-icon">
+                    +
                 </div>
+
+                <div>
+
+                    <strong>
+                        Register Account
+                    </strong>
+
+                    <small>
+                        Add TNM, Airtel or bank account
+                    </small>
+
+                </div>
+
             </button>
 
         </div>
 
+
+        <!-- ACCOUNTS -->
+
         <div class="accounts-preview">
-            <h3>My Accounts</h3>
+
+            <h3>
+                My Accounts
+            </h3>
+
             <div id="accountsList">
-                <p class="empty">No accounts registered yet.</p>
+
+                <p class="empty">
+                    No accounts registered yet.
+                </p>
+
             </div>
+
         </div>
 
     </section>
 
 
+    <!-- ============================= -->
     <!-- REGISTER -->
-    <section id="register" class="screen">
+    <!-- ============================= -->
 
-        <button class="back" onclick="showScreen('home')">← Back</button>
+    <section id="register"
+             class="screen">
 
-        <h2>Register Account</h2>
+        <button
+            class="back"
+            onclick="showScreen('home')">
+
+            ← Back
+
+        </button>
+
+
+        <h2>
+            Register Account
+        </h2>
+
+
         <p class="subtitle">
-            Add an account that can be used for receiving payments.
+
+            Add an account that can be used
+            for sending and receiving payments.
+
         </p>
+
 
         <form id="registerForm">
 
-            <label>Provider</label>
 
-            <select id="provider" required>
-                <option value="">Select provider</option>
-                <option value="TNM Mpamba">TNM Mpamba</option>
-                <option value="Airtel Money">Airtel Money</option>
-                <option value="FDH Bank">FDH Bank</option>
-                <option value="NBS Bank">NBS Bank</option>
-                <option value="National Bank">National Bank</option>
-                <option value="Standard Bank">Standard Bank</option>
-                <option value="Other">Other</option>
+            <label>
+                Provider
+            </label>
+
+
+            <select id="provider"
+                    required>
+
+                <option value="">
+                    Select provider
+                </option>
+
+                <option value="TNM Mpamba">
+                    TNM Mpamba
+                </option>
+
+                <option value="Airtel Money">
+                    Airtel Money
+                </option>
+
+                <option value="FDH Bank">
+                    FDH Bank
+                </option>
+
+                <option value="NBS Bank">
+                    NBS Bank
+                </option>
+
+                <option value="National Bank">
+                    National Bank
+                </option>
+
+                <option value="Standard Bank">
+                    Standard Bank
+                </option>
+
+                <option value="Other">
+                    Other
+                </option>
+
             </select>
 
 
-            <label>Account / Mobile Number</label>
+            <label>
+                Account / Mobile Number
+            </label>
+
 
             <input
                 type="text"
@@ -117,7 +279,10 @@
             >
 
 
-            <label>Account Name</label>
+            <label>
+                Account Name
+            </label>
+
 
             <input
                 type="text"
@@ -127,7 +292,10 @@
             >
 
 
-            <label>Demo PIN</label>
+            <label>
+                Demo PIN
+            </label>
+
 
             <input
                 type="password"
@@ -137,36 +305,73 @@
                 required
             >
 
+
             <p class="warning">
-                ⚠ Demo only — never enter your real banking PIN.
+
+                ⚠ Demo only —
+                never enter your real banking PIN.
+
             </p>
 
-            <button class="primary" type="submit">
+
+            <button
+                class="primary"
+                type="submit">
+
                 Save Account
+
             </button>
+
 
         </form>
 
     </section>
 
 
+    <!-- ============================= -->
     <!-- SEND -->
-    <section id="send" class="screen">
+    <!-- ============================= -->
 
-        <button class="back" onclick="showScreen('home')">← Back</button>
+    <section id="send"
+             class="screen">
 
-        <h2>Send Money</h2>
+        <button
+            class="back"
+            onclick="showScreen('home')">
+
+            ← Back
+
+        </button>
+
+
+        <h2>
+            Send Money
+        </h2>
+
 
         <form id="sendForm">
 
-            <label>Pay From</label>
 
-            <select id="sendAccount" required>
-                <option value="">Select account</option>
+            <label>
+                Pay From
+            </label>
+
+
+            <select
+                id="sendAccount"
+                required>
+
+                <option value="">
+                    Select account
+                </option>
+
             </select>
 
 
-            <label>Amount (MWK)</label>
+            <label>
+                Amount (MWK)
+            </label>
+
 
             <input
                 type="number"
@@ -177,7 +382,10 @@
             >
 
 
-            <label>Demo PIN</label>
+            <label>
+                Demo PIN
+            </label>
+
 
             <input
                 type="password"
@@ -187,152 +395,362 @@
                 required
             >
 
-            <button class="primary" type="submit">
+
+            <button
+                class="primary"
+                type="submit">
+
                 Generate Payment QR
+
             </button>
+
 
         </form>
 
     </section>
 
 
-    <!-- QR PAYMENT -->
-    <section id="paymentQR" class="screen">
+    <!-- ============================= -->
+    <!-- PAYMENT QR -->
+    <!-- ============================= -->
 
-        <button class="back" onclick="showScreen('send')">← Back</button>
+    <section id="paymentQR"
+             class="screen">
 
-        <h2>Payment QR</h2>
+        <button
+            class="back"
+            onclick="showScreen('send')">
+
+            ← Back
+
+        </button>
+
+
+        <h2>
+            Payment QR
+        </h2>
+
 
         <p class="subtitle">
+
             Let the receiver scan this QR code.
+
         </p>
 
+
         <div class="qr-container">
+
             <div id="qrcode"></div>
+
         </div>
+
 
         <div class="payment-details">
 
-            <span>Provider</span>
+            <span>
+                Provider
+            </span>
+
             <strong id="qrProvider"></strong>
 
-            <span>Amount</span>
-            <strong>MWK <span id="qrAmount"></span></strong>
 
-            <span>Sender</span>
+            <span>
+                Amount
+            </span>
+
+            <strong>
+                MWK
+                <span id="qrAmount"></span>
+            </strong>
+
+
+            <span>
+                Sender
+            </span>
+
             <strong id="qrSender"></strong>
 
         </div>
 
+
         <div class="waiting">
+
             📱 Waiting for receiver to scan...
+
         </div>
 
-        <button class="secondary" onclick="showScreen('home')">
+
+        <button
+            class="secondary"
+            onclick="showScreen('home')">
+
             Done
+
         </button>
 
     </section>
 
 
-    <!-- RECEIVE -->
-    <section id="receive" class="screen">
+    <!-- ============================= -->
+    <!-- RECEIVE / SCANNER -->
+    <!-- ============================= -->
 
-        <button class="back" onclick="showScreen('home')">← Back</button>
+    <section id="receive"
+             class="screen">
 
-        <h2>Receive Money</h2>
+        <button
+            class="back"
+            onclick="showScreen('home')">
+
+            ← Back
+
+        </button>
+
+
+        <h2>
+            Receive Money
+        </h2>
+
 
         <p class="subtitle">
+
             Scan the sender's QuickPay QR code.
+
         </p>
+
 
         <div id="reader"></div>
 
+
         <div id="scanResult"></div>
 
-        <button class="secondary" onclick="startScanner()">
+
+        <button
+            class="secondary"
+            onclick="startScanner()">
+
             Open Camera
+
         </button>
 
     </section>
 
 
-    <!-- CONFIRM PAYMENT -->
-    <section id="confirm" class="screen">
+    <!-- ============================= -->
+    <!-- PAYMENT NOTIFICATION -->
+    <!-- ============================= -->
 
-        <button class="back" onclick="showScreen('receive')">← Back</button>
+    <section id="notification"
+             class="screen">
 
-        <h2>Confirm Payment</h2>
+        <div class="notification-page">
 
-        <div class="confirmation-card">
-
-            <div class="success-icon">✓</div>
-
-            <h3>Payment Found</h3>
-
-            <div class="confirm-row">
-                <span>Provider</span>
-                <strong id="confirmProvider"></strong>
+            <div class="notification-icon">
+                ✓
             </div>
 
-            <div class="confirm-row">
-                <span>Amount</span>
-                <strong>MWK <span id="confirmAmount"></span></strong>
+
+            <div class="notification-label">
+                PAYMENT RECEIVED
             </div>
 
-            <div class="confirm-row">
-                <span>Sender</span>
-                <strong id="confirmSender"></strong>
+
+            <h2>
+                Money Received
+            </h2>
+
+
+            <div class="received-amount">
+
+                MWK
+                <span id="notificationAmount">
+                    0
+                </span>
+
             </div>
 
-            <div class="confirm-row">
-                <span>Transaction</span>
-                <strong id="confirmTransaction"></strong>
+
+            <div class="notification-message">
+
+                <p>
+                    You have received a payment from
+                </p>
+
+                <strong id="notificationSender">
+                    —
+                </strong>
+
             </div>
 
-        </div>
 
-        <button class="primary" onclick="completePayment()">
-            Confirm & Receive
-        </button>
+            <div class="notification-details">
 
-    </section>
+                <div>
+
+                    <span>
+                        From
+                    </span>
+
+                    <strong id="notificationProvider">
+                        —
+                    </strong>
+
+                </div>
 
 
-    <!-- SUCCESS -->
-    <section id="success" class="screen">
+                <div>
 
-        <div class="success-page">
+                    <span>
+                        To
+                    </span>
 
-            <div class="big-success">✓</div>
+                    <strong id="notificationReceiver">
+                        —
+                    </strong>
 
-            <h2>Payment Successful</h2>
+                </div>
 
-            <p>The mock transaction has been completed.</p>
 
-            <div class="success-amount">
-                MWK <span id="successAmount"></span>
+                <div>
+
+                    <span>
+                        Account
+                    </span>
+
+                    <strong id="notificationAccount">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Transaction
+                    </span>
+
+                    <strong id="notificationTransaction">
+                        —
+                    </strong>
+
+                </div>
+
             </div>
 
-            <div class="success-info">
-                <span>Provider</span>
-                <strong id="successProvider"></strong>
 
-                <span>Transaction</span>
-                <strong id="successTransaction"></strong>
-            </div>
+            <button
+                class="primary"
+                onclick="acceptNotification()">
 
-            <button class="primary" onclick="showScreen('home')">
-                Return Home
+                OK
+
             </button>
 
         </div>
 
     </section>
 
+
+    <!-- ============================= -->
+    <!-- SUCCESS -->
+    <!-- ============================= -->
+
+    <section id="success"
+             class="screen">
+
+        <div class="success-page">
+
+            <div class="big-success">
+                ✓
+            </div>
+
+
+            <h2>
+                Payment Successful
+            </h2>
+
+
+            <p>
+                The mock transaction has been completed.
+            </p>
+
+
+            <div class="success-amount">
+
+                MWK
+                <span id="successAmount">
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="success-info">
+
+                <span>
+                    Provider
+                </span>
+
+                <strong id="successProvider">
+                    —
+                </strong>
+
+
+                <span>
+                    Transaction
+                </span>
+
+                <strong id="successTransaction">
+                    —
+                </strong>
+
+            </div>
+
+
+            <button
+                class="primary"
+                onclick="showScreen('home')">
+
+                Return Home
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================= -->
+    <!-- TOAST NOTIFICATION -->
+    <!-- ============================= -->
+
+    <div id="toast"
+         class="toast">
+
+        <div class="toast-icon">
+            ✓
+        </div>
+
+        <div>
+
+            <strong id="toastTitle">
+                QuickPay
+            </strong>
+
+            <p id="toastMessage">
+                —
+            </p>
+
+        </div>
+
+    </div>
+
 </div>
+
 
 <script src="app.js"></script>
 
 </body>
+
 </html>

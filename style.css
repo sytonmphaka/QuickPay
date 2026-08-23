@@ -1088,6 +1088,74 @@ select:focus {
 
 
 /* ==========================================
+   NOTIFICATION TOAST
+========================================== */
+
+.toast {
+    position: fixed;
+
+    top: 20px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    z-index: 99999;
+
+    padding: 14px 24px;
+
+    border-radius: 12px;
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    max-width: 90%;
+
+    width: 400px;
+
+    text-align: center;
+
+    box-shadow:
+        0 8px 30px
+        rgba(0, 0, 0, .2);
+
+    animation:
+        slideDown .3s ease;
+}
+
+.toast-success {
+    background: #087f5b;
+
+    color: white;
+}
+
+.toast-error {
+    background: #d93025;
+
+    color: white;
+}
+
+.toast-info {
+    background: #1a73e8;
+
+    color: white;
+}
+
+@keyframes slideDown {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+
+
+/* ==========================================
    RESPONSIVE
 ========================================== */
 

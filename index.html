@@ -1,244 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="theme-color"
-        content="#087f5b"
-    >
+    <meta name="theme-color"
+          content="#087f5b">
 
     <title>QuickPay</title>
 
-    <!-- QR GENERATOR -->
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
-    </script>
+    <link rel="stylesheet"
+          href="style.css">
 
-    <!-- QR SCANNER -->
-    <script
-        src="https://unpkg.com/html5-qrcode"
-        type="text/javascript">
-    </script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
-    <!-- FIREBASE -->
-    <script
-        src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
-    </script>
+    <!-- QR generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <script
-        src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
-    </script>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
+    <!-- QR scanner -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
-
 
 <body>
 
 <div class="app">
 
-
-    <!-- ==========================================
+    <!-- =========================================
          HEADER
-         ========================================== -->
+    ========================================== -->
 
-    <header>
+    <header class="top-header">
 
-        <div class="logo">
-
-            <div class="logo-icon">
-                Q
-            </div>
-
-            <div>
-
-                <h1>
-                    QuickPay
-                </h1>
-
-                <span>
-                    Fast • Simple • Secure
-                </span>
-
-            </div>
-
+        <div>
+            <h1>QuickPay</h1>
+            <p>Simple. Fast. Connected.</p>
         </div>
 
     </header>
 
 
-
-    <!-- ==========================================
+    <!-- =========================================
          HOME
-         ========================================== -->
+    ========================================== -->
 
-    <section
-        id="home"
-        class="screen active"
-    >
+    <section id="homePage" class="page active">
 
-        <div class="welcome">
+        <div class="welcome-card">
 
-            <h2>
-                Welcome to QuickPay
-            </h2>
+            <h2>Welcome to QuickPay</h2>
 
             <p>
-                Simple QR payments between registered
-                accounts.
+                Send and receive money using a simple QR code.
             </p>
 
         </div>
 
 
-        <div class="balance-card">
-
-            <span>
-                Demo Balance
-            </span>
-
-            <strong id="homeBalance">
-                MWK 0
-            </strong>
-
-            <small>
-                Mock account balance
-            </small>
-
-        </div>
-
-
-        <div class="main-actions">
-
-
-            <!-- PAY -->
+        <div class="home-buttons">
 
             <button
-                class="action"
-                onclick="showScreen('pay')"
-            >
+                class="main-button send-button"
+                onclick="openSendPage()">
 
-                <div class="action-icon">
-                    →
-                </div>
+                <span class="button-icon">↗</span>
 
-                <div>
-
-                    <strong>
-                        Pay
-                    </strong>
-
-                    <small>
-                        Pay someone by scanning their QR
-                    </small>
-
-                </div>
+                <span>
+                    <strong>Send</strong>
+                    <small>Scan and send money</small>
+                </span>
 
             </button>
 
 
-
-            <!-- RECEIVE -->
-
             <button
-                class="action"
-                onclick="showScreen('receive')"
-            >
+                class="main-button receive-button"
+                onclick="openReceivePage()">
 
-                <div class="action-icon">
-                    ↓
-                </div>
+                <span class="button-icon">↓</span>
 
-                <div>
-
-                    <strong>
-                        Receive
-                    </strong>
-
-                    <small>
-                        Create a QR payment request
-                    </small>
-
-                </div>
+                <span>
+                    <strong>Receive</strong>
+                    <small>Create a QR code</small>
+                </span>
 
             </button>
 
 
-
-            <!-- ACCOUNTS -->
-
             <button
-                class="action"
-                onclick="showScreen('accounts')"
-            >
+                class="main-button"
+                onclick="openAccountsPage()">
 
-                <div class="action-icon">
-                    +
-                </div>
+                <span class="button-icon">👤</span>
 
-                <div>
-
-                    <strong>
-                        My Accounts
-                    </strong>
-
-                    <small>
-                        Manage your payment accounts
-                    </small>
-
-                </div>
+                <span>
+                    <strong>Manage Accounts</strong>
+                    <small>Add or remove accounts</small>
+                </span>
 
             </button>
 
 
-
-            <!-- TRANSACTIONS -->
-
             <button
-                class="action"
-                onclick="showScreen('transactions')"
-            >
+                class="main-button"
+                onclick="openTransactionsPage()">
 
-                <div class="action-icon">
-                    ≡
-                </div>
+                <span class="button-icon">↔</span>
 
-                <div>
-
-                    <strong>
-                        Transactions
-                    </strong>
-
-                    <small>
-                        View money sent and received
-                    </small>
-
-                </div>
+                <span>
+                    <strong>Transactions</strong>
+                    <small>View sent and received</small>
+                </span>
 
             </button>
-
-        </div>
-
-
-        <div class="accounts-preview">
-
-            <h3>
-                Registered Accounts
-            </h3>
-
-            <div id="homeAccounts"></div>
 
         </div>
 
@@ -246,50 +123,410 @@
 
 
 
-    <!-- ==========================================
-         ACCOUNTS
-         ========================================== -->
+    <!-- =========================================
+         RECEIVE PAGE
+    ========================================== -->
 
-    <section
-        id="accounts"
-        class="screen"
-    >
+    <section id="receivePage" class="page">
 
-        <button
-            class="back"
-            onclick="showScreen('home')"
-        >
+        <button class="back-button"
+                onclick="goHome()">
+
             ← Back
+
         </button>
 
-        <h2>
-            My Accounts
-        </h2>
+        <h2>Receive Money</h2>
 
-        <p class="subtitle">
-            Register the accounts you want to use
-            with QuickPay.
+        <p class="page-description">
+            Create a QR code for the person who wants to send
+            you money.
         </p>
 
 
-        <form id="accountForm">
+        <div id="receiveForm">
+
+            <label>
+                Receive from
+            </label>
+
+            <select id="receiveAccount">
+
+                <option value="">
+                    Select account
+                </option>
+
+            </select>
+
+
+            <label>
+                Amount
+            </label>
+
+            <input
+                type="number"
+                id="receiveAmount"
+                placeholder="Enter amount"
+                min="1"
+                step="0.01">
+
+
+            <button
+                class="primary-button"
+                onclick="createReceivePayment()">
+
+                Generate QR Code
+
+            </button>
+
+        </div>
+
+
+        <!-- QR area -->
+
+        <div id="qrArea" class="hidden">
+
+            <div class="status-box active-status">
+
+                <strong>Waiting for payment</strong>
+
+                <span id="waitingText">
+                    Waiting for someone to scan this QR code...
+                </span>
+
+            </div>
+
+
+            <div class="qr-card">
+
+                <div id="qrcode"></div>
+
+                <p class="qr-instruction">
+                    Let the sender scan this code.
+                </p>
+
+            </div>
+
+
+            <div class="qr-actions">
+
+                <button
+                    class="secondary-button"
+                    onclick="saveQRCode()">
+
+                    Save QR
+
+                </button>
+
+
+                <button
+                    class="secondary-button"
+                    onclick="shareQRCode()">
+
+                    Share
+
+                </button>
+
+            </div>
+
+
+            <button
+                class="done-button"
+                onclick="finishReceive()">
+
+                Done
+
+            </button>
+
+
+            <button
+                class="cancel-button"
+                onclick="cancelReceivePayment()">
+
+                Cancel Payment
+
+            </button>
+
+        </div>
+
+
+        <!-- Received result -->
+
+        <div id="receiveSuccess"
+             class="hidden">
+
+            <div class="success-card">
+
+                <div class="success-icon">
+                    ✓
+                </div>
+
+                <h2>Payment Received</h2>
+
+                <h3 id="receivedAmountText"></h3>
+
+                <p id="receivedFromText"></p>
+
+                <div class="transaction-details">
+
+                    <div>
+                        <span>Account</span>
+                        <strong id="receivedAccountText"></strong>
+                    </div>
+
+                    <div>
+                        <span>Date</span>
+                        <strong id="receivedDateText"></strong>
+                    </div>
+
+                    <div>
+                        <span>Time</span>
+                        <strong id="receivedTimeText"></strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <button
+                class="primary-button"
+                onclick="goHome()">
+
+                OK
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================================
+         SEND PAGE
+    ========================================== -->
+
+    <section id="sendPage" class="page">
+
+        <button class="back-button"
+                onclick="goHome()">
+
+            ← Back
+
+        </button>
+
+        <h2>Send Money</h2>
+
+        <p class="page-description">
+            Select the account you want to send money from.
+        </p>
+
+
+        <label>
+            Send from
+        </label>
+
+        <select id="sendAccount">
+
+            <option value="">
+                Select account
+            </option>
+
+        </select>
+
+
+        <label>
+            Account PIN / Password
+        </label>
+
+        <input
+            type="password"
+            id="sendPin"
+            placeholder="Enter account PIN or password">
+
+
+        <button
+            class="primary-button"
+            onclick="startScanner()">
+
+            Continue & Scan
+
+        </button>
+
+
+        <div id="scannerArea"
+             class="hidden">
+
+            <div class="scanner-header">
+
+                <h3>Scan Receiver QR</h3>
+
+                <p>
+                    Point your camera at the receiver's QR code.
+                </p>
+
+            </div>
+
+
+            <div id="reader"></div>
+
+
+            <button
+                class="cancel-button"
+                onclick="stopScanner()">
+
+                Cancel Scanner
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================================
+         PAYMENT CONFIRMATION
+    ========================================== -->
+
+    <section id="confirmPage" class="page">
+
+        <button class="back-button"
+                onclick="cancelConfirmation()">
+
+            ← Back
+
+        </button>
+
+        <h2>Confirm Send</h2>
+
+
+        <div class="confirmation-card">
+
+            <div class="confirmation-recipient">
+
+                <div class="recipient-icon">
+                    👤
+                </div>
+
+                <div>
+
+                    <strong id="confirmReceiverName">
+                        -
+                    </strong>
+
+                    <span id="confirmReceiverAccount">
+                        -
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="payment-summary">
+
+                <div>
+                    <span>Amount</span>
+                    <strong id="confirmAmount">
+                        MWK 0
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>Transaction fee</span>
+                    <strong id="confirmFee">
+                        MWK 0
+                    </strong>
+                </div>
+
+
+                <div class="total-row">
+                    <span>Total</span>
+                    <strong id="confirmTotal">
+                        MWK 0
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="confirmation-warning">
+
+                Please confirm that you want to send
+                this amount to the account shown above.
+
+            </div>
+
+
+            <button
+                class="primary-button"
+                onclick="confirmPayment()">
+
+                Confirm Send
+
+            </button>
+
+
+            <button
+                class="cancel-confirm-button"
+                onclick="cancelConfirmation()">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================================
+         ACCOUNTS PAGE
+    ========================================== -->
+
+    <section id="accountsPage" class="page">
+
+        <button class="back-button"
+                onclick="goHome()">
+
+            ← Back
+
+        </button>
+
+        <h2>Manage Accounts</h2>
+
+        <p class="page-description">
+            Add accounts that you can use with QuickPay.
+        </p>
+
+
+        <div id="accountsList"></div>
+
+
+        <div class="add-account-card">
+
+            <h3>Add Account</h3>
 
 
             <label>
                 Provider
             </label>
 
-            <select id="provider">
+            <select id="accountProvider">
 
                 <option value="">
                     Select provider
                 </option>
 
                 <option value="TNM">
-                    TNM Mpamba
+                    TNM
                 </option>
 
-                <option value="Airtel">
+                <option value="Airtel Money">
                     Airtel Money
                 </option>
 
@@ -299,10 +536,6 @@
 
                 <option value="NBS Bank">
                     NBS Bank
-                </option>
-
-                <option value="Standard Bank">
-                    Standard Bank
                 </option>
 
                 <option value="National Bank">
@@ -317,58 +550,42 @@
 
 
             <label>
-                Account / Mobile / Agent Code
+                Account / Mobile Number
             </label>
 
             <input
                 id="accountNumber"
                 type="text"
-                placeholder="Enter account number"
-                required
-            >
+                placeholder="e.g. 0999123456">
 
 
             <label>
-                Account Holder / Business Name
+                Account Name
             </label>
 
             <input
                 id="accountName"
                 type="text"
-                placeholder="Enter name"
-                required
-            >
+                placeholder="Account holder name">
 
 
             <label>
-                Demo PIN / Password
+                PIN / Password
             </label>
 
             <input
                 id="accountPin"
                 type="password"
-                placeholder="For prototype only"
-                required
-            >
+                placeholder="Demo PIN / password">
 
 
             <button
-                class="primary"
-                type="submit"
-            >
+                class="primary-button"
+                onclick="addAccount()">
+
                 Add Account
+
             </button>
-
-        </form>
-
-
-        <div class="accounts-preview">
-
-            <h3>
-                Your Accounts
-            </h3>
-
-            <div id="accountsList"></div>
 
         </div>
 
@@ -376,686 +593,124 @@
 
 
 
-    <!-- ==========================================
-         RECEIVE / CREATE QR
-         ========================================== -->
+    <!-- =========================================
+         TRANSACTIONS PAGE
+    ========================================== -->
 
-    <section
-        id="receive"
-        class="screen"
-    >
+    <section id="transactionsPage" class="page">
 
-        <button
-            class="back"
-            onclick="showScreen('home')"
-        >
+        <button class="back-button"
+                onclick="goHome()">
+
             ← Back
+
         </button>
 
-        <h2>
-            Receive Money
-        </h2>
-
-        <p class="subtitle">
-            Create a QR code that tells the payer
-            exactly where and how much to pay.
-        </p>
-
-
-        <form id="receiveForm">
-
-
-            <label>
-                Receive From Account
-            </label>
-
-            <select
-                id="receiveAccount"
-                required
-            >
-
-                <option value="">
-                    Select receiving account
-                </option>
-
-            </select>
-
-
-            <label>
-                Amount (MWK)
-            </label>
-
-            <input
-                id="receiveAmount"
-                type="number"
-                min="1"
-                placeholder="50000"
-                required
-            >
-
-
-            <button
-                class="primary"
-                type="submit"
-            >
-                Generate Payment QR
-            </button>
-
-        </form>
-
-
-        <div
-            id="receiveQRArea"
-            style="display:none;"
-        >
-
-            <div class="payment-details">
-
-                <span>
-                    Receiving from
-                </span>
-
-                <strong id="qrProvider">
-                    -
-                </strong>
-
-                <span>
-                    Account
-                </span>
-
-                <strong id="qrAccount">
-                    -
-                </strong>
-
-                <span>
-                    Name
-                </span>
-
-                <strong id="qrName">
-                    -
-                </strong>
-
-                <span>
-                    Amount
-                </span>
-
-                <strong id="qrAmount">
-                    -
-                </strong>
-
-            </div>
-
-
-            <div class="qr-container">
-
-                <div id="qrcode"></div>
-
-            </div>
-
-
-            <div class="qr-buttons">
-
-                <button
-                    class="secondary"
-                    onclick="saveQR()"
-                    type="button"
-                >
-                    Save QR
-                </button>
-
-
-                <button
-                    class="secondary"
-                    onclick="shareQR()"
-                    type="button"
-                >
-                    Share QR
-                </button>
-
-            </div>
-
-
-            <button
-                class="done-button"
-                onclick="finishReceive()"
-                type="button"
-            >
-                Done
-            </button>
-
-
-            <button
-                class="cancel-button"
-                onclick="cancelReceivePayment()"
-                type="button"
-            >
-                Cancel Payment
-            </button>
-
-
-            <div
-                id="receiveWaiting"
-                class="waiting"
-            >
-                Waiting for payment...
-            </div>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- ==========================================
-         PAY
-         ========================================== -->
-
-    <section
-        id="pay"
-        class="screen"
-    >
-
-        <button
-            class="back"
-            onclick="showScreen('home')"
-        >
-            ← Back
-        </button>
-
-        <h2>
-            Pay
-        </h2>
-
-        <p class="subtitle">
-            Select the account you want to pay from.
-            You will then enter its PIN before scanning.
-        </p>
-
-
-        <form id="payForm">
-
-
-            <label>
-                Pay From
-            </label>
-
-            <select
-                id="payAccount"
-                required
-            >
-
-                <option value="">
-                    Select account
-                </option>
-
-            </select>
-
-
-            <label>
-                Account PIN / Password
-            </label>
-
-            <input
-                id="payPin"
-                type="password"
-                placeholder="Enter account PIN"
-                required
-            >
-
-
-            <button
-                class="primary"
-                type="submit"
-            >
-                Continue to Scanner
-            </button>
-
-        </form>
-
-    </section>
-
-
-
-    <!-- ==========================================
-         SCANNER
-         ========================================== -->
-
-    <section
-        id="scanner"
-        class="screen"
-    >
-
-        <button
-            class="back"
-            onclick="cancelScan()"
-        >
-            ← Cancel
-        </button>
-
-        <h2>
-            Scan Payment QR
-        </h2>
-
-        <p class="subtitle">
-            Point the camera at the receiver's
-            QuickPay QR code.
-        </p>
-
-
-        <div id="reader"></div>
-
-
-        <div
-            id="scanMessage"
-            class="waiting"
-        >
-            Waiting for QR code...
-        </div>
-
-    </section>
-
-
-
-    <!-- ==========================================
-         PAYMENT CONFIRMATION
-         ========================================== -->
-
-    <section
-        id="confirmation"
-        class="screen"
-    >
-
-        <button
-            class="back"
-            onclick="cancelConfirmation()"
-        >
-            ← Back
-        </button>
-
-        <div class="success-page">
-
-            <div class="big-success">
-                ?
-            </div>
-
-            <h2>
-                Confirm Payment
-            </h2>
-
-            <p>
-                Please review the payment details.
-            </p>
-
-        </div>
-
-
-        <div class="success-amount">
-
-            Amount
-
-            <span id="confirmAmount">
-                MWK 0
-            </span>
-
-        </div>
-
-
-        <div class="success-info">
-
-            <span>
-                To
-            </span>
-
-            <strong id="confirmName">
-                -
-            </strong>
-
-
-            <span>
-                Provider
-            </span>
-
-            <strong id="confirmProvider">
-                -
-            </strong>
-
-
-            <span>
-                Account
-            </span>
-
-            <strong id="confirmAccount">
-                -
-            </strong>
-
-
-            <span>
-                Transaction fee
-            </span>
-
-            <strong id="confirmFee">
-                MWK 0
-            </strong>
-
-
-            <span>
-                Total deducted
-            </span>
-
-            <strong id="confirmTotal">
-                MWK 0
-            </strong>
-
-        </div>
-
-
-        <button
-            class="primary"
-            onclick="confirmPayment()"
-            type="button"
-        >
-            Confirm Payment
-        </button>
-
-
-        <button
-            class="cancel-button"
-            onclick="cancelConfirmation()"
-            type="button"
-        >
-            Cancel
-        </button>
-
-    </section>
-
-
-
-    <!-- ==========================================
-         SUCCESS
-         ========================================== -->
-
-    <section
-        id="paymentSuccess"
-        class="screen"
-    >
-
-        <div class="success-page">
-
-            <div class="big-success">
-                ✓
-            </div>
-
-            <h2>
-                Payment Sent
-            </h2>
-
-            <p>
-                Your payment has been completed.
-            </p>
-
-        </div>
-
-
-        <div class="success-amount">
-
-            Sent
-
-            <span id="successAmount">
-                MWK 0
-            </span>
-
-        </div>
-
-
-        <div class="success-info">
-
-            <span>
-                To
-            </span>
-
-            <strong id="successName">
-                -
-            </strong>
-
-
-            <span>
-                Provider
-            </span>
-
-            <strong id="successProvider">
-                -
-            </strong>
-
-
-            <span>
-                Account
-            </span>
-
-            <strong id="successAccount">
-                -
-            </strong>
-
-
-            <span>
-                Fee
-            </span>
-
-            <strong id="successFee">
-                -
-            </strong>
-
-
-            <span>
-                Total
-            </span>
-
-            <strong id="successTotal">
-                -
-            </strong>
-
-        </div>
-
-
-        <button
-            class="primary"
-            onclick="showScreen('home')"
-            type="button"
-        >
-            Back to Home
-        </button>
-
-    </section>
-
-
-
-    <!-- ==========================================
-         RECEIVER SUCCESS
-         ========================================== -->
-
-    <section
-        id="receiveSuccess"
-        class="screen"
-    >
-
-        <div class="notification-page">
-
-            <div class="notification-icon">
-                ✓
-            </div>
-
-            <div class="notification-label">
-                PAYMENT RECEIVED
-            </div>
-
-            <h2>
-                You Have Received
-            </h2>
-
-        </div>
-
-
-        <div class="received-amount">
-
-            Amount
-
-            <span id="receivedAmount">
-                MWK 0
-            </span>
-
-        </div>
-
-
-        <div class="notification-message">
-
-            <p>
-                Payment received from
-            </p>
-
-            <strong id="receivedFrom">
-                -
-            </strong>
-
-        </div>
-
-
-        <div class="notification-details">
-
-            <div>
-
-                <span>
-                    Provider
-                </span>
-
-                <strong id="receivedProvider">
-                    -
-                </strong>
-
-            </div>
-
-
-            <div>
-
-                <span>
-                    Account
-                </span>
-
-                <strong id="receivedAccount">
-                    -
-                </strong>
-
-            </div>
-
-
-            <div>
-
-                <span>
-                    Date
-                </span>
-
-                <strong id="receivedDate">
-                    -
-                </strong>
-
-            </div>
-
-        </div>
-
-
-        <button
-            class="primary"
-            onclick="showScreen('home')"
-            type="button"
-        >
-            OK
-        </button>
-
-    </section>
-
-
-
-    <!-- ==========================================
-         TRANSACTIONS
-         ========================================== -->
-
-    <section
-        id="transactions"
-        class="screen"
-    >
-
-        <button
-            class="back"
-            onclick="showScreen('home')"
-        >
-            ← Back
-        </button>
-
-        <h2>
-            Transactions
-        </h2>
-
-        <p class="subtitle">
-            View money sent and received.
-        </p>
+        <h2>Transactions</h2>
 
 
         <div class="transaction-tabs">
 
             <button
+                id="allTab"
                 class="tab active"
-                id="sentTab"
-                onclick="showTransactionType('sent')"
-            >
-                Sent
+                onclick="showTransactions('all')">
+
+                All
+
             </button>
 
+
             <button
+                id="sentTab"
                 class="tab"
+                onclick="showTransactions('sent')">
+
+                Sent
+
+            </button>
+
+
+            <button
                 id="receivedTab"
-                onclick="showTransactionType('received')"
-            >
+                class="tab"
+                onclick="showTransactions('received')">
+
                 Received
+
             </button>
 
         </div>
 
 
-        <div id="transactionList"></div>
+        <div id="transactionsList">
+
+        </div>
 
     </section>
 
 
 
+    <!-- =========================================
+         DELETE ACCOUNT MODAL
+    ========================================== -->
+
+    <div id="deleteModal"
+         class="modal hidden">
+
+        <div class="modal-content">
+
+            <h3>Delete Account?</h3>
+
+            <p>
+                Are you sure you want to remove this account
+                from QuickPay?
+            </p>
+
+
+            <div class="delete-account-preview">
+
+                <strong id="deleteAccountName"></strong>
+
+                <span id="deleteAccountNumber"></span>
+
+            </div>
+
+
+            <div class="modal-buttons">
+
+                <button
+                    class="modal-cancel"
+                    onclick="closeDeleteModal()">
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    class="modal-delete"
+                    onclick="confirmDeleteAccount()">
+
+                    Delete
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
 </div>
 
 
-<!-- TOAST -->
-
-<div
-    id="toast"
-    class="toast"
->
-
-    <div class="toast-icon">
-        ✓
-    </div>
-
-    <div>
-
-        <strong id="toastTitle">
-            QuickPay
-        </strong>
-
-        <p id="toastMessage">
-            Done
-        </p>
-
-    </div>
-
-</div>
-
+<!-- =========================================
+     APP JAVASCRIPT
+========================================== -->
 
 <script src="app.js"></script>
 
 </body>
-
 </html>

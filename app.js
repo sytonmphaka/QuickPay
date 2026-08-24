@@ -97,7 +97,7 @@ let currentReceivingAccount = null;
 
 
 /* =========================================================
-   NOTIFICATION SYSTEM
+   NOTIFICATION SYSTEM (Toast - Small)
 ========================================================= */
 
 function showToast(message, type) {
@@ -126,7 +126,6 @@ function showToast(message, type) {
         "toast toast-" + type;
 
 
-    // Handle multiline messages
     if (message.includes('\n')) {
         toast.style.whiteSpace = 'pre-line';
         toast.style.textAlign = 'left';
@@ -156,6 +155,90 @@ function showToast(message, type) {
         }, 300);
 
     }, 5000);
+}
+
+
+
+/* =========================================================
+   RECEIVE PAYMENT NOTIFICATION (LARGE POPUP WITH OK BUTTON)
+========================================================= */
+
+function showReceiveNotification(amount, senderName, senderProvider, accountNumber, date, time) {
+
+    // Remove any existing notification
+    const oldNotif = document.querySelector(".receive-notification-overlay");
+    if (oldNotif) {
+        oldNotif.remove();
+    }
+
+    const formattedAmount = formatMoney(amount);
+    const providerDisplay = getProviderDisplayName(senderProvider);
+
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.className = "receive-notification-overlay";
+
+    // Create notification card
+    const card = document.createElement("div");
+    card.className = "receive-notification";
+
+    card.innerHTML = `
+
+        <div class="receive-notification-icon">
+            💰
+        </div>
+
+        <h2>Payment Received!</h2>
+        <p class="receive-notification-sub">Money has been credited to your account</p>
+
+        <div class="receive-amount">
+            MWK ${formattedAmount}
+        </div>
+
+        <div class="receive-details">
+            <div class="receive-detail-row">
+                <span class="receive-label">From</span>
+                <span class="receive-value">${escapeHtml(senderName)}</span>
+            </div>
+            <div class="receive-detail-row">
+                <span class="receive-label">Provider</span>
+                <span class="receive-value">${escapeHtml(providerDisplay)}</span>
+            </div>
+            <div class="receive-detail-row">
+                <span class="receive-label">Account</span>
+                <span class="receive-value">${escapeHtml(accountNumber)}</span>
+            </div>
+            <div class="receive-detail-row">
+                <span class="receive-label">Date</span>
+                <span class="receive-value">${escapeHtml(date)}</span>
+            </div>
+            <div class="receive-detail-row">
+                <span class="receive-label">Time</span>
+                <span class="receive-value">${escapeHtml(time)}</span>
+            </div>
+        </div>
+
+        <button class="receive-notification-btn" onclick="closeReceiveNotification()">
+            ✅ OK
+        </button>
+
+    `;
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+}
+
+
+function closeReceiveNotification() {
+
+    const overlay = document.querySelector(".receive-notification-overlay");
+    if (overlay) {
+        overlay.style.opacity = "0";
+        overlay.style.transition = "opacity 0.3s";
+        setTimeout(() => {
+            overlay.remove();
+        }, 300);
+    }
 }
 
 
@@ -221,7 +304,6 @@ function openReceivePage() {
         .getElementById("qrArea")
         .classList.add("hidden");
 
-    // Stop any previous listener
     stopReceiveListener();
 
     showPage("receivePage");
@@ -451,7 +533,6 @@ async function sendMoney(sessionToken, receiverNumber, amount, fee) {
 
         const { accountNumber, provider } = decoded;
 
-        // Get sender details
         const senderSnapshot = await database
             .ref(`mock_bank_data/${provider}`)
             .once("value");
@@ -476,7 +557,6 @@ async function sendMoney(sessionToken, receiverNumber, amount, fee) {
             return { success: false, message: "Insufficient balance. You have MWK " + formatMoney(sender.balance) };
         }
 
-        // Find receiver (check all providers)
         const providers = ["tnm", "airtel", "fdh", "nbs", "national"];
         let receiverAccount = null;
         let receiverProvider = null;
@@ -506,21 +586,17 @@ async function sendMoney(sessionToken, receiverNumber, amount, fee) {
             return { success: false, message: "Receiver account not found" };
         }
 
-        // Update balances
         const senderNewBalance = sender.balance - totalAmount;
         const receiverNewBalance = receiverAccount.balance + amount;
 
-        // Update sender
         await database
             .ref(`mock_bank_data/${provider}/${senderKey}/balance`)
             .set(senderNewBalance);
 
-        // Update receiver
         await database
             .ref(`mock_bank_data/${receiverProvider}/${receiverKey}/balance`)
             .set(receiverNewBalance);
 
-        // Create transaction record - IMPORTANT: This is where the receiver data is stored
         const transactionId = "TXN_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
 
         const transaction = {
@@ -539,7 +615,6 @@ async function sendMoney(sessionToken, receiverNumber, amount, fee) {
             date: new Date().toLocaleDateString(),
             time: new Date().toLocaleTimeString(),
             timestamp: Date.now(),
-            // THIS IS WHAT THE RECEIVER LISTENS FOR:
             receiver: {
                 accountNumber: receiverNumber,
                 provider: receiverProvider,
@@ -1002,13 +1077,7 @@ async function createReceiveQR() {
     }
 
 
-    // Store the receiving account for the listener
     currentReceivingAccount = account;
-
-    /*
-     * Generate a reusable QR code with receiver details only
-     * This QR never expires - perfect for agents/merchants
-     */
 
     const qrData =
         JSON.stringify({
@@ -1053,7 +1122,6 @@ async function createReceiveQR() {
     );
 
 
-    // Generate reusable Transaction ID (account-based)
     const reusableId = 
         account.provider.toUpperCase() + 
         "-" + 
@@ -1075,7 +1143,6 @@ async function createReceiveQR() {
         .classList.remove("hidden");
 
 
-    // Start listening for incoming payments on this account
     startReceiveListener(account);
 
     showToast("✅ QR Code generated! This QR never expires. Keep it open to receive payments.", "success");
@@ -1092,7 +1159,6 @@ function startReceiveListener(account) {
     stopReceiveListener();
 
     if (!account) {
-        // Try to get the account from the current QR if not passed
         const accountId = document.getElementById("receiveAccount").value;
         if (accountId) {
             account = accounts.find(a => a.id === accountId);
@@ -1105,7 +1171,6 @@ function startReceiveListener(account) {
 
     console.log("🔔 Listening for payments to:", account.number);
 
-    // Listen for ALL new transactions
     const transactionsRef = database.ref("quickpay_transactions");
 
     receiveListener = transactionsRef.on(
@@ -1118,8 +1183,6 @@ function startReceiveListener(account) {
 
             console.log("📦 New transaction detected:", data);
 
-            // Check if this transaction is FOR this receiver
-            // The receiver data is stored in the transaction
             if (data.receiver && 
                 data.receiver.accountNumber === account.number && 
                 data.receiver.provider === account.provider &&
@@ -1128,7 +1191,6 @@ function startReceiveListener(account) {
 
                 console.log("💰 Payment received for this account!");
                 
-                // This is a payment received by this account
                 handleReceivedPayment(data, account);
             }
         }
@@ -1158,12 +1220,13 @@ function handleReceivedPayment(data, account) {
 
     const amount = Number(data.amount || 0);
     const senderName = data.fromName || "Someone";
-    const senderProvider = getProviderDisplayName(data.fromProvider || "");
-    const formattedAmount = formatMoney(amount);
+    const senderProvider = data.fromProvider || "";
+    const accountNumber = data.from || "";
+    const date = data.date || new Date().toLocaleDateString();
+    const time = data.time || new Date().toLocaleTimeString();
 
     console.log("💰 Processing received payment:", amount, "from", senderName);
 
-    // Add to local transactions
     const receivedRecord = {
         id: "local_" + Date.now(),
         type: "received",
@@ -1171,18 +1234,17 @@ function handleReceivedPayment(data, account) {
         amount: amount,
         fee: Number(data.fee || 0),
         total: amount + Number(data.fee || 0),
-        provider: data.fromProvider,
+        provider: senderProvider,
         name: senderName,
-        accountNumber: data.from || "",
-        date: data.date || new Date().toLocaleDateString(),
-        time: data.time || new Date().toLocaleTimeString(),
+        accountNumber: accountNumber,
+        date: date,
+        time: time,
         transactionId: data.id
     };
 
     localTransactions.unshift(receivedRecord);
     saveLocalTransactions();
 
-    // Update local account balance
     const accountToUpdate = accounts.find(a => a.id === account.id);
     if (accountToUpdate) {
         database.ref(`mock_bank_data/${account.provider}`)
@@ -1201,24 +1263,24 @@ function handleReceivedPayment(data, account) {
             });
     }
 
-    // SHOW TOAST NOTIFICATION - This is what the receiver sees!
-    showToast(
-        "💰 Payment Received!\n\n" +
-        "MWK " + formattedAmount +
-        " from " + senderName +
-        "\n(" + senderProvider + ")",
-        "success"
+    // SHOW LARGE NOTIFICATION WITH OK BUTTON
+    showReceiveNotification(
+        amount,
+        senderName,
+        senderProvider,
+        accountNumber,
+        date,
+        time
     );
 
-    // Also show browser notification
+    // Browser notification (optional)
     if (Notification && Notification.permission === "granted") {
         new Notification("QuickPay - Payment Received", {
-            body: "MWK " + formattedAmount + " received from " + senderName,
+            body: "MWK " + formatMoney(amount) + " received from " + senderName,
             icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23087f5b'/%3E%3Ctext x='50' y='65' text-anchor='middle' font-size='40' fill='white' font-family='Arial'%3E%24%3C/text%3E%3C/svg%3E"
         });
     }
 
-    // Refresh transactions list if on transactions page
     if (document.getElementById("transactionsPage").classList.contains("active")) {
         renderTransactions();
     }
@@ -1436,12 +1498,11 @@ async function shareQRCode() {
 
 
 /* =========================================================
-   RECEIVE — DONE (Go Home but keep listening?)
+   RECEIVE — DONE (Go Home)
 ========================================================= */
 
 function finishReceive() {
 
-    // Stop listening when going home
     stopReceiveListener();
 
     document

@@ -611,6 +611,35 @@ select:focus {
     overflow: hidden;
 }
 
+.manual-entry-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.manual-entry-section p {
+    color: #777;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.manual-entry-section .input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.manual-entry-section input {
+    flex: 1;
+}
+
+.manual-entry-section button {
+    flex: 0 0 auto;
+    padding: 14px 20px;
+    margin-top: 0;
+    white-space: nowrap;
+}
+
 
 
 /* ==========================================
@@ -822,6 +851,14 @@ select:focus {
 
 .add-account-card h3 {
     margin-top: 0;
+}
+
+#nationalIdGroup {
+    display: none;
+}
+
+#nationalIdGroup.visible {
+    display: block;
 }
 
 
@@ -1181,5 +1218,13 @@ select:focus {
 
     .transaction-bottom {
         flex-direction: column;
+    }
+
+    .manual-entry-section .input-group {
+        flex-direction: column;
+    }
+
+    .manual-entry-section button {
+        width: 100%;
     }
 }

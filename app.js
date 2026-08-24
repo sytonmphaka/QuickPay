@@ -94,6 +94,9 @@ let pendingSessionToken = null;
 
 let currentReceivingAccount = null;
 
+// Track processed transaction IDs to avoid duplicate notifications
+let processedTransactions = new Set();
+
 
 
 /* =========================================================
@@ -1151,7 +1154,7 @@ async function createReceiveQR() {
 
 
 /* =========================================================
-   RECEIVE — LISTEN FOR INCOMING PAYMENTS
+   RECEIVE — LISTEN FOR INCOMING PAYMENTS (FIXED)
 ========================================================= */
 
 function startReceiveListener(account) {
@@ -1169,7 +1172,10 @@ function startReceiveListener(account) {
         return;
     }
 
-    console.log("🔔 Listening for payments to:", account.number);
+    // Clear processed set when starting new listener
+    processedTransactions = new Set();
+
+    console.log("🔔 Listening for NEW payments to:", account.number);
 
     const transactionsRef = database.ref("quickpay_transactions");
 
@@ -1181,16 +1187,27 @@ function startReceiveListener(account) {
             
             if (!data) return;
 
-            console.log("📦 New transaction detected:", data);
+            console.log("📦 New transaction detected:", data.id);
 
+            // Check if this transaction is FOR this receiver
             if (data.receiver && 
                 data.receiver.accountNumber === account.number && 
                 data.receiver.provider === account.provider &&
                 data.type === "sent" && 
                 data.status === "completed") {
 
-                console.log("💰 Payment received for this account!");
+                // IMPORTANT: Check if we've already processed this transaction
+                if (processedTransactions.has(data.id)) {
+                    console.log("⏭️ Already processed transaction:", data.id);
+                    return;
+                }
+
+                // Mark as processed
+                processedTransactions.add(data.id);
                 
+                console.log("💰 NEW payment received for this account!", data.id);
+                
+                // This is a NEW payment - show notification
                 handleReceivedPayment(data, account);
             }
         }
@@ -1206,6 +1223,7 @@ function stopReceiveListener() {
         const transactionsRef = database.ref("quickpay_transactions");
         transactionsRef.off("child_added", receiveListener);
         receiveListener = null;
+        processedTransactions = new Set();
         console.log("🛑 Receive listener stopped");
     }
 }
@@ -1225,8 +1243,9 @@ function handleReceivedPayment(data, account) {
     const date = data.date || new Date().toLocaleDateString();
     const time = data.time || new Date().toLocaleTimeString();
 
-    console.log("💰 Processing received payment:", amount, "from", senderName);
+    console.log("💰 Processing NEW received payment:", amount, "from", senderName, "ID:", data.id);
 
+    // Add to local transactions
     const receivedRecord = {
         id: "local_" + Date.now(),
         type: "received",
@@ -1245,6 +1264,7 @@ function handleReceivedPayment(data, account) {
     localTransactions.unshift(receivedRecord);
     saveLocalTransactions();
 
+    // Update local account balance
     const accountToUpdate = accounts.find(a => a.id === account.id);
     if (accountToUpdate) {
         database.ref(`mock_bank_data/${account.provider}`)
@@ -1263,7 +1283,7 @@ function handleReceivedPayment(data, account) {
             });
     }
 
-    // SHOW LARGE NOTIFICATION WITH OK BUTTON
+    // SHOW LARGE NOTIFICATION WITH OK BUTTON - ONLY FOR NEW PAYMENTS!
     showReceiveNotification(
         amount,
         senderName,
@@ -1833,8 +1853,7 @@ async function lookupTransactionId() {
 
 
 /* =========================================================
-   SEND — STOP SCANNER
-========================================================= */
+   SEND — STOP SCANNER========================================================= */
 
 async function stopScanner() {
 

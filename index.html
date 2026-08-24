@@ -141,6 +141,7 @@
         <p class="page-description">
             Generate a QR code for people to send you money.
             <br><strong>Note:</strong> This QR never expires!
+            <br>Keep this page open to receive notifications.
         </p>
 
 
@@ -176,11 +177,12 @@
 
             <div class="status-box active-status">
 
-                <strong>Ready to receive</strong>
+                <strong>📱 Ready to receive</strong>
 
                 <span id="waitingText">
                     Share this QR code with anyone who wants to send you money.
-                    <br>This QR code never expires!
+                    <br>🔁 This QR code never expires!
+                    <br>💰 You will get a notification when money is received.
                 </span>
 
             </div>
@@ -195,7 +197,11 @@
                 </p>
 
                 <p style="color:#087f5b;font-size:13px;margin-top:10px;font-weight:bold;">
-                    Reusable Transaction ID: <strong id="displayTransactionId">-</strong>
+                    Receiver: <span id="receiverAccountDisplay">-</span>
+                </p>
+
+                <p style="color:#087f5b;font-size:13px;font-weight:bold;">
+                    Reusable ID: <strong id="displayTransactionId">-</strong>
                 </p>
 
                 <p style="color:#999;font-size:11px;margin-top:5px;">
@@ -241,56 +247,6 @@
                 onclick="cancelReceivePayment()">
 
                 Close QR
-
-            </button>
-
-        </div>
-
-
-        <!-- Received result (kept for compatibility) -->
-
-        <div id="receiveSuccess"
-             class="hidden">
-
-            <div class="success-card">
-
-                <div class="success-icon">
-                    ✓
-                </div>
-
-                <h2>Payment Received</h2>
-
-                <h3 id="receivedAmountText"></h3>
-
-                <p id="receivedFromText"></p>
-
-                <div class="transaction-details">
-
-                    <div>
-                        <span>Account</span>
-                        <strong id="receivedAccountText"></strong>
-                    </div>
-
-                    <div>
-                        <span>Date</span>
-                        <strong id="receivedDateText"></strong>
-                    </div>
-
-                    <div>
-                        <span>Time</span>
-                        <strong id="receivedTimeText"></strong>
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <button
-                class="primary-button"
-                onclick="goHome()">
-
-                OK
 
             </button>
 

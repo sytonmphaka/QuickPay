@@ -546,7 +546,7 @@
                 Provider
             </label>
 
-            <select id="accountProvider" onchange="toggleNationalId()">
+            <select id="accountProvider" onchange="toggleFields()">
 
                 <option value="">
                     Select provider
@@ -579,28 +579,31 @@
             </select>
 
 
-            <label>
-                Account / Mobile Number
-            </label>
+            <div id="accountNumberGroup">
+                <label>
+                    Account / Mobile Number
+                </label>
 
-            <input
-                id="accountNumber"
-                type="text"
-                placeholder="e.g. 0888123456 or 102500123456">
+                <input
+                    id="accountNumber"
+                    type="text"
+                    placeholder="e.g. 0888123456 or 102500123456">
+            </div>
 
 
-            <label>
-                Account Name
-            </label>
+            <div id="accountNameGroup">
+                <label>
+                    Account Name
+                </label>
 
-            <input
-                id="accountName"
-                type="text"
-                placeholder="Account holder name">
+                <input
+                    id="accountName"
+                    type="text"
+                    placeholder="Account holder name">
+            </div>
 
 
             <div id="nationalIdGroup">
-
                 <label>
                     National ID Number
                 </label>
@@ -609,18 +612,19 @@
                     id="nationalId"
                     type="text"
                     placeholder="e.g. NM123456789">
-
             </div>
 
 
-            <label>
-                PIN / Password
-            </label>
+            <div id="accountPinGroup">
+                <label>
+                    PIN / Password
+                </label>
 
-            <input
-                id="accountPin"
-                type="password"
-                placeholder="Enter your PIN/password">
+                <input
+                    id="accountPin"
+                    type="password"
+                    placeholder="Enter your PIN/password">
+            </div>
 
 
             <button

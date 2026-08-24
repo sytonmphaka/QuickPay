@@ -124,7 +124,7 @@
 
 
     <!-- =========================================
-         RECEIVE PAGE
+         RECEIVE PAGE (NO AMOUNT - JUST QR)
     ========================================== -->
 
     <section id="receivePage" class="page">
@@ -139,15 +139,15 @@
         <h2>Receive Money</h2>
 
         <p class="page-description">
-            Create a QR code for the person who wants to send
-            you money.
+            Generate a QR code for people to send you money.
+            <br><strong>Note:</strong> This QR never expires!
         </p>
 
 
         <div id="receiveForm">
 
             <label>
-                Receive from
+                Receive into
             </label>
 
             <select id="receiveAccount">
@@ -159,21 +159,9 @@
             </select>
 
 
-            <label>
-                Amount
-            </label>
-
-            <input
-                type="number"
-                id="receiveAmount"
-                placeholder="Enter amount"
-                min="1"
-                step="0.01">
-
-
             <button
                 class="primary-button"
-                onclick="createReceivePayment()">
+                onclick="createReceiveQR()">
 
                 Generate QR Code
 
@@ -188,10 +176,11 @@
 
             <div class="status-box active-status">
 
-                <strong>Waiting for payment</strong>
+                <strong>Ready to receive</strong>
 
                 <span id="waitingText">
-                    Waiting for someone to scan this QR code...
+                    Share this QR code with anyone who wants to send you money.
+                    <br>This QR code never expires!
                 </span>
 
             </div>
@@ -205,8 +194,12 @@
                     Let the sender scan this code.
                 </p>
 
-                <p style="color:#999;font-size:12px;margin-top:10px;">
-                    Transaction ID: <strong id="displayTransactionId">-</strong>
+                <p style="color:#087f5b;font-size:13px;margin-top:10px;font-weight:bold;">
+                    Reusable Transaction ID: <strong id="displayTransactionId">-</strong>
+                </p>
+
+                <p style="color:#999;font-size:11px;margin-top:5px;">
+                    ⚡ This QR never expires. Use it for agents, merchants, or regular payments.
                 </p>
 
             </div>
@@ -247,14 +240,14 @@
                 class="cancel-button"
                 onclick="cancelReceivePayment()">
 
-                Cancel Payment
+                Close QR
 
             </button>
 
         </div>
 
 
-        <!-- Received result -->
+        <!-- Received result (kept for compatibility) -->
 
         <div id="receiveSuccess"
              class="hidden">
@@ -308,7 +301,7 @@
 
 
     <!-- =========================================
-         SEND PAGE
+         SEND PAGE (WITH AMOUNT)
     ========================================== -->
 
     <section id="sendPage" class="page">
@@ -323,7 +316,7 @@
         <h2>Send Money</h2>
 
         <p class="page-description">
-            Select the account you want to send money from.
+            Select your account, enter amount, then scan or enter the receiver's ID.
         </p>
 
 
@@ -338,6 +331,18 @@
             </option>
 
         </select>
+
+
+        <label>
+            Amount (MWK)
+        </label>
+
+        <input
+            type="number"
+            id="sendAmount"
+            placeholder="Enter amount to send"
+            min="1"
+            step="0.01">
 
 
         <label>
@@ -386,7 +391,7 @@
                     <input
                         type="text"
                         id="manualTransactionId"
-                        placeholder="Enter Transaction ID manually">
+                        placeholder="Enter Transaction ID (e.g. TNM-0888123456)">
 
                     <button
                         class="primary-button"
@@ -398,6 +403,11 @@
                     </button>
 
                 </div>
+
+                <p style="color:#999;font-size:11px;margin-top:8px;">
+                    Transaction ID format: PROVIDER-ACCOUNTNUMBER<br>
+                    Example: TNM-0888123456, FDH-102500123456
+                </p>
 
             </div>
 

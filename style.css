@@ -863,14 +863,12 @@ select:focus {
 
 #accountNumberGroup,
 #nationalIdGroup,
-#accountNameGroup,
 #accountPinGroup {
     display: none;
 }
 
 #accountNumberGroup.visible,
 #nationalIdGroup.visible,
-#accountNameGroup.visible,
 #accountPinGroup.visible {
     display: block;
 }

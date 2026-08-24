@@ -94,8 +94,11 @@ let pendingSessionToken = null;
 
 let currentReceivingAccount = null;
 
-// Track processed transaction IDs to avoid duplicate notifications
+// Track processed transaction IDs
 let processedTransactions = new Set();
+
+// Track when listener started (to filter out old transactions)
+let listenerStartTime = 0;
 
 
 
@@ -1154,7 +1157,7 @@ async function createReceiveQR() {
 
 
 /* =========================================================
-   RECEIVE — LISTEN FOR INCOMING PAYMENTS (FIXED)
+   RECEIVE — LISTEN FOR INCOMING PAYMENTS (FIXED - ONLY NEW)
 ========================================================= */
 
 function startReceiveListener(account) {
@@ -1175,45 +1178,55 @@ function startReceiveListener(account) {
     // Clear processed set when starting new listener
     processedTransactions = new Set();
 
-    console.log("🔔 Listening for NEW payments to:", account.number);
+    // Record the time when the listener starts (to filter out old transactions)
+    listenerStartTime = Date.now();
 
+    console.log("🔔 Listening for NEW payments to:", account.number);
+    console.log("⏰ Listener started at:", new Date(listenerStartTime).toLocaleTimeString());
+
+    // IMPORTANT: Use a query that only gets transactions created AFTER the listener started
+    // We use the 'timestamp' field which is stored in each transaction
     const transactionsRef = database.ref("quickpay_transactions");
 
-    receiveListener = transactionsRef.on(
-        "child_added",
-        async snapshot => {
+    receiveListener = transactionsRef
+        .orderByChild("timestamp")
+        .startAt(listenerStartTime)
+        .on(
+            "child_added",
+            async snapshot => {
 
-            const data = snapshot.val();
-            
-            if (!data) return;
+                const data = snapshot.val();
+                
+                if (!data) return;
 
-            console.log("📦 New transaction detected:", data.id);
+                console.log("📦 New transaction detected (after listener start):", data.id);
 
-            // Check if this transaction is FOR this receiver
-            if (data.receiver && 
-                data.receiver.accountNumber === account.number && 
-                data.receiver.provider === account.provider &&
-                data.type === "sent" && 
-                data.status === "completed") {
+                // Check if this transaction is FOR this receiver
+                if (data.receiver && 
+                    data.receiver.accountNumber === account.number && 
+                    data.receiver.provider === account.provider &&
+                    data.type === "sent" && 
+                    data.status === "completed") {
 
-                // IMPORTANT: Check if we've already processed this transaction
-                if (processedTransactions.has(data.id)) {
-                    console.log("⏭️ Already processed transaction:", data.id);
-                    return;
+                    // Check if we've already processed this transaction
+                    if (processedTransactions.has(data.id)) {
+                        console.log("⏭️ Already processed transaction:", data.id);
+                        return;
+                    }
+
+                    // Mark as processed
+                    processedTransactions.add(data.id);
+                    
+                    console.log("💰 NEW payment received for this account!", data.id);
+                    
+                    // This is a NEW payment - show notification
+                    handleReceivedPayment(data, account);
                 }
-
-                // Mark as processed
-                processedTransactions.add(data.id);
-                
-                console.log("💰 NEW payment received for this account!", data.id);
-                
-                // This is a NEW payment - show notification
-                handleReceivedPayment(data, account);
             }
-        }
-    );
+        );
 
     console.log("✅ Receive listener started for account:", account.number);
+    console.log("📌 Only listening for transactions after:", new Date(listenerStartTime).toLocaleTimeString());
 }
 
 
@@ -1224,6 +1237,7 @@ function stopReceiveListener() {
         transactionsRef.off("child_added", receiveListener);
         receiveListener = null;
         processedTransactions = new Set();
+        listenerStartTime = 0;
         console.log("🛑 Receive listener stopped");
     }
 }
@@ -1853,7 +1867,8 @@ async function lookupTransactionId() {
 
 
 /* =========================================================
-   SEND — STOP SCANNER========================================================= */
+   SEND — STOP SCANNER
+========================================================= */
 
 async function stopScanner() {
 

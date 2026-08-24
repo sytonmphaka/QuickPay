@@ -78,8 +78,6 @@ function saveLocalTransactions() {
    CURRENT STATE
 ========================================================= */
 
-let currentReceiveRef = null;
-
 let receiveListener = null;
 
 let scanner = null;
@@ -94,7 +92,7 @@ let transactionFilter = "all";
 
 let pendingSessionToken = null;
 
-let isListeningForReceived = false;
+let currentReceivingAccount = null;
 
 
 
@@ -128,6 +126,13 @@ function showToast(message, type) {
         "toast toast-" + type;
 
 
+    // Handle multiline messages
+    if (message.includes('\n')) {
+        toast.style.whiteSpace = 'pre-line';
+        toast.style.textAlign = 'left';
+        toast.style.padding = '16px 20px';
+    }
+
     toast.textContent =
         message;
 
@@ -135,7 +140,7 @@ function showToast(message, type) {
     document.body.appendChild(toast);
 
 
-    /* Auto-dismiss after 4 seconds. */
+    /* Auto-dismiss after 5 seconds. */
 
     setTimeout(() => {
 
@@ -150,7 +155,7 @@ function showToast(message, type) {
 
         }, 300);
 
-    }, 4000);
+    }, 5000);
 }
 
 
@@ -186,8 +191,6 @@ function goHome() {
 
     stopScanner();
 
-    stopReceiveListener();
-
     showPage("homePage");
 }
 
@@ -217,6 +220,9 @@ function openReceivePage() {
     document
         .getElementById("qrArea")
         .classList.add("hidden");
+
+    // Stop any previous listener
+    stopReceiveListener();
 
     showPage("receivePage");
 }
@@ -378,22 +384,18 @@ function calculateFee(senderProvider, receiverProvider) {
     const senderIsBank = isBank(senderProvider);
     const receiverIsBank = isBank(receiverProvider);
 
-    // Same provider (TNM to TNM, Airtel to Airtel, Bank to same Bank)
     if (senderProvider === receiverProvider) {
         return 20;
     }
 
-    // Both are mobile but different (TNM to Airtel or vice versa)
     if (!senderIsBank && !receiverIsBank) {
         return 30;
     }
 
-    // Both are banks but different (FDH to NBS, etc.)
     if (senderIsBank && receiverIsBank) {
         return 40;
     }
 
-    // One is bank, one is mobile
     return 50;
 }
 
@@ -518,7 +520,7 @@ async function sendMoney(sessionToken, receiverNumber, amount, fee) {
             .ref(`mock_bank_data/${receiverProvider}/${receiverKey}/balance`)
             .set(receiverNewBalance);
 
-        // Create transaction record
+        // Create transaction record - IMPORTANT: This is where the receiver data is stored
         const transactionId = "TXN_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
 
         const transaction = {
@@ -536,7 +538,13 @@ async function sendMoney(sessionToken, receiverNumber, amount, fee) {
             status: "completed",
             date: new Date().toLocaleDateString(),
             time: new Date().toLocaleTimeString(),
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            // THIS IS WHAT THE RECEIVER LISTENS FOR:
+            receiver: {
+                accountNumber: receiverNumber,
+                provider: receiverProvider,
+                accountName: receiverAccount.name
+            }
         };
 
         await database
@@ -994,6 +1002,9 @@ async function createReceiveQR() {
     }
 
 
+    // Store the receiving account for the listener
+    currentReceivingAccount = account;
+
     /*
      * Generate a reusable QR code with receiver details only
      * This QR never expires - perfect for agents/merchants
@@ -1092,8 +1103,9 @@ function startReceiveListener(account) {
         return;
     }
 
-    // Listen for new transactions where this account is the receiver
-    // We'll check all new transactions in the quickpay_transactions node
+    console.log("🔔 Listening for payments to:", account.number);
+
+    // Listen for ALL new transactions
     const transactionsRef = database.ref("quickpay_transactions");
 
     receiveListener = transactionsRef.on(
@@ -1104,20 +1116,25 @@ function startReceiveListener(account) {
             
             if (!data) return;
 
-            // Check if this transaction is for this receiver account
+            console.log("📦 New transaction detected:", data);
+
+            // Check if this transaction is FOR this receiver
+            // The receiver data is stored in the transaction
             if (data.receiver && 
                 data.receiver.accountNumber === account.number && 
                 data.receiver.provider === account.provider &&
-                data.type === "sent" && // Only sent transactions (from sender)
+                data.type === "sent" && 
                 data.status === "completed") {
 
+                console.log("💰 Payment received for this account!");
+                
                 // This is a payment received by this account
                 handleReceivedPayment(data, account);
             }
         }
     );
 
-    isListeningForReceived = true;
+    console.log("✅ Receive listener started for account:", account.number);
 }
 
 
@@ -1127,13 +1144,14 @@ function stopReceiveListener() {
         const transactionsRef = database.ref("quickpay_transactions");
         transactionsRef.off("child_added", receiveListener);
         receiveListener = null;
-        isListeningForReceived = false;
+        console.log("🛑 Receive listener stopped");
     }
 }
 
 
+
 /* =========================================================
-   RECEIVE — HANDLE RECEIVED PAYMENT (WITHOUT CHANGING SCREEN)
+   RECEIVE — HANDLE RECEIVED PAYMENT
 ========================================================= */
 
 function handleReceivedPayment(data, account) {
@@ -1141,6 +1159,9 @@ function handleReceivedPayment(data, account) {
     const amount = Number(data.amount || 0);
     const senderName = data.fromName || "Someone";
     const senderProvider = getProviderDisplayName(data.fromProvider || "");
+    const formattedAmount = formatMoney(amount);
+
+    console.log("💰 Processing received payment:", amount, "from", senderName);
 
     // Add to local transactions
     const receivedRecord = {
@@ -1164,7 +1185,6 @@ function handleReceivedPayment(data, account) {
     // Update local account balance
     const accountToUpdate = accounts.find(a => a.id === account.id);
     if (accountToUpdate) {
-        // We need to fetch the latest balance from Firebase
         database.ref(`mock_bank_data/${account.provider}`)
             .once("value")
             .then(snapshot => {
@@ -1181,29 +1201,22 @@ function handleReceivedPayment(data, account) {
             });
     }
 
-    // Show notification - toast appears even if on different page
+    // SHOW TOAST NOTIFICATION - This is what the receiver sees!
     showToast(
         "💰 Payment Received!\n\n" +
-        "MWK " + formatMoney(amount) +
+        "MWK " + formattedAmount +
         " from " + senderName +
         "\n(" + senderProvider + ")",
         "success"
     );
 
-    // Also show a browser notification if permitted
+    // Also show browser notification
     if (Notification && Notification.permission === "granted") {
         new Notification("QuickPay - Payment Received", {
-            body: "MWK " + formatMoney(amount) + " received from " + senderName,
+            body: "MWK " + formattedAmount + " received from " + senderName,
             icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23087f5b'/%3E%3Ctext x='50' y='65' text-anchor='middle' font-size='40' fill='white' font-family='Arial'%3E%24%3C/text%3E%3C/svg%3E"
         });
     }
-
-    // Play a sound notification (optional)
-    try {
-        const audio = new Audio('data:audio/wav;base64,UklGRlAAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAABEQVQ4');
-        audio.volume = 0.3;
-        audio.play().catch(() => {});
-    } catch (e) {}
 
     // Refresh transactions list if on transactions page
     if (document.getElementById("transactionsPage").classList.contains("active")) {
@@ -1230,6 +1243,8 @@ function cancelReceivePayment() {
         .getElementById("receiveForm")
         .classList.remove("hidden");
 
+
+    currentReceivingAccount = null;
 
     showToast("QR Code closed.", "info");
 }
@@ -1426,8 +1441,7 @@ async function shareQRCode() {
 
 function finishReceive() {
 
-    // We stop listening when going home
-    // The QR will still work if they come back
+    // Stop listening when going home
     stopReceiveListener();
 
     document
@@ -1439,6 +1453,8 @@ function finishReceive() {
         .getElementById("receiveForm")
         .classList.remove("hidden");
 
+
+    currentReceivingAccount = null;
 
     goHome();
 }

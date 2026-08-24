@@ -253,9 +253,6 @@ function toggleFields() {
     const accountNumberGroup =
         document.getElementById("accountNumberGroup");
 
-    const accountNameGroup =
-        document.getElementById("accountNameGroup");
-
     const nationalIdGroup =
         document.getElementById("nationalIdGroup");
 
@@ -264,11 +261,9 @@ function toggleFields() {
 
     const bankProviders = ["fdh", "nbs", "national"];
 
-    // Clear all fields when provider changes
     if (provider) {
-        // Show all fields
+        // Show account number and password for all providers
         accountNumberGroup.classList.add("visible");
-        accountNameGroup.classList.add("visible");
         accountPinGroup.classList.add("visible");
 
         // Show national ID only for banks
@@ -280,7 +275,6 @@ function toggleFields() {
     } else {
         // Hide all if no provider selected
         accountNumberGroup.classList.remove("visible");
-        accountNameGroup.classList.remove("visible");
         nationalIdGroup.classList.remove("visible");
         accountPinGroup.classList.remove("visible");
     }
@@ -304,7 +298,7 @@ async function verifyAccount(provider, accountNumber, password, nationalId = nul
         const accounts = snapshot.val();
 
         if (!accounts) {
-            return { success: false, message: "Provider not found. Please check the provider name." };
+            return { success: false, message: "Provider not found." };
         }
 
         // Convert object to array and find matching account
@@ -550,9 +544,6 @@ async function addAccount() {
     const number =
         document.getElementById("accountNumber").value.trim();
 
-    const name =
-        document.getElementById("accountName").value.trim();
-
     const pin =
         document.getElementById("accountPin").value.trim();
 
@@ -567,11 +558,6 @@ async function addAccount() {
 
     if (!number) {
         showToast("Please enter the account or mobile number.", "error");
-        return;
-    }
-
-    if (!name) {
-        showToast("Please enter the account name.", "error");
         return;
     }
 
@@ -593,7 +579,7 @@ async function addAccount() {
         id: "acc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 8),
         provider: provider,
         number: result.account.number,
-        name: result.account.name,
+        name: result.account.name,  // Name comes from database
         type: result.account.type || "mobile",
         balance: result.account.balance || 0,
         createdAt: new Date().toISOString()
@@ -612,13 +598,12 @@ async function addAccount() {
 
     // Clear form
     document.getElementById("accountNumber").value = "";
-    document.getElementById("accountName").value = "";
     document.getElementById("accountPin").value = "";
     document.getElementById("nationalId").value = "";
 
     renderAccounts();
 
-    // Show success with provider display name
+    // Show success with provider display name and account name from database
     const displayName = getProviderDisplayName(provider);
     showToast("✅ " + displayName + " account " + result.account.name + " verified and added successfully!", "success");
 }
@@ -2464,8 +2449,7 @@ function showTransactions(filter) {
 
     if (filter === "sent") {
 
-        document
-            .getElementById("sentTab")
+        document            .getElementById("sentTab")
             .classList.add("active");
 
     }

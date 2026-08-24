@@ -205,6 +205,10 @@
                     Let the sender scan this code.
                 </p>
 
+                <p style="color:#999;font-size:12px;margin-top:10px;">
+                    Transaction ID: <strong id="displayTransactionId">-</strong>
+                </p>
+
             </div>
 
 
@@ -372,6 +376,32 @@
             <div id="reader"></div>
 
 
+            <!-- Manual Entry Section -->
+            <div class="manual-entry-section">
+
+                <p>— OR —</p>
+
+                <div class="input-group">
+
+                    <input
+                        type="text"
+                        id="manualTransactionId"
+                        placeholder="Enter Transaction ID manually">
+
+                    <button
+                        class="primary-button"
+                        onclick="lookupTransactionId()"
+                        style="margin-top:0;">
+
+                        Lookup
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
             <button
                 class="cancel-button"
                 onclick="stopScanner()">
@@ -516,33 +546,33 @@
                 Provider
             </label>
 
-            <select id="accountProvider">
+            <select id="accountProvider" onchange="toggleNationalId()">
 
                 <option value="">
                     Select provider
                 </option>
 
-                <option value="TNM">
+                <option value="tnm">
                     TNM
                 </option>
 
-                <option value="Airtel Money">
+                <option value="airtel">
                     Airtel Money
                 </option>
 
-                <option value="FDH Bank">
+                <option value="fdh">
                     FDH Bank
                 </option>
 
-                <option value="NBS Bank">
+                <option value="nbs">
                     NBS Bank
                 </option>
 
-                <option value="National Bank">
+                <option value="national">
                     National Bank
                 </option>
 
-                <option value="Other">
+                <option value="other">
                     Other
                 </option>
 
@@ -556,7 +586,7 @@
             <input
                 id="accountNumber"
                 type="text"
-                placeholder="e.g. 0999123456">
+                placeholder="e.g. 0888123456 or 102500123456">
 
 
             <label>
@@ -569,6 +599,20 @@
                 placeholder="Account holder name">
 
 
+            <div id="nationalIdGroup">
+
+                <label>
+                    National ID Number
+                </label>
+
+                <input
+                    id="nationalId"
+                    type="text"
+                    placeholder="e.g. NM123456789">
+
+            </div>
+
+
             <label>
                 PIN / Password
             </label>
@@ -576,7 +620,7 @@
             <input
                 id="accountPin"
                 type="password"
-                placeholder="Demo PIN / password">
+                placeholder="Enter your PIN/password">
 
 
             <button

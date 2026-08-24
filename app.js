@@ -242,29 +242,48 @@ function openTransactionsPage() {
 
 
 /* =========================================================
-   TOGGLE NATIONAL ID
+   TOGGLE FIELDS
 ========================================================= */
 
-function toggleNationalId() {
+function toggleFields() {
 
     const provider =
         document.getElementById("accountProvider").value;
 
+    const accountNumberGroup =
+        document.getElementById("accountNumberGroup");
+
+    const accountNameGroup =
+        document.getElementById("accountNameGroup");
+
     const nationalIdGroup =
         document.getElementById("nationalIdGroup");
 
+    const accountPinGroup =
+        document.getElementById("accountPinGroup");
+
     const bankProviders = ["fdh", "nbs", "national"];
 
-    if (bankProviders.includes(provider)) {
+    // Clear all fields when provider changes
+    if (provider) {
+        // Show all fields
+        accountNumberGroup.classList.add("visible");
+        accountNameGroup.classList.add("visible");
+        accountPinGroup.classList.add("visible");
 
-        nationalIdGroup.classList.add("visible");
-
+        // Show national ID only for banks
+        if (bankProviders.includes(provider)) {
+            nationalIdGroup.classList.add("visible");
+        } else {
+            nationalIdGroup.classList.remove("visible");
+        }
     } else {
-
+        // Hide all if no provider selected
+        accountNumberGroup.classList.remove("visible");
+        accountNameGroup.classList.remove("visible");
         nationalIdGroup.classList.remove("visible");
-
+        accountPinGroup.classList.remove("visible");
     }
-
 }
 
 
@@ -285,7 +304,7 @@ async function verifyAccount(provider, accountNumber, password, nationalId = nul
         const accounts = snapshot.val();
 
         if (!accounts) {
-            return { success: false, message: "Provider not found" };
+            return { success: false, message: "Provider not found. Please check the provider name." };
         }
 
         // Convert object to array and find matching account
@@ -293,17 +312,17 @@ async function verifyAccount(provider, accountNumber, password, nationalId = nul
         const account = accountList.find(a => a.accountNumber === accountNumber);
 
         if (!account) {
-            return { success: false, message: "Account not found" };
+            return { success: false, message: "Account number not found." };
         }
 
         if (account.password !== password) {
-            return { success: false, message: "Invalid password" };
+            return { success: false, message: "Invalid password." };
         }
 
         // Bank accounts require national ID
         if (account.type === "bank") {
             if (!nationalId || account.nationalId !== nationalId) {
-                return { success: false, message: "Invalid National ID" };
+                return { success: false, message: "Invalid National ID." };
             }
         }
 
@@ -316,15 +335,15 @@ async function verifyAccount(provider, accountNumber, password, nationalId = nul
                 number: account.accountNumber,
                 name: account.name,
                 provider: provider,
-                balance: account.balance,
-                type: account.type
+                balance: account.balance || 0,
+                type: account.type || "mobile"
             },
             token: token
         };
 
     } catch (error) {
         console.error("Verification error:", error);
-        return { success: false, message: "Verification failed" };
+        return { success: false, message: "Verification failed: " + error.message };
     }
 }
 
@@ -433,7 +452,7 @@ async function sendMoney(sessionToken, receiverNumber, amount, fee = 20) {
         const totalAmount = amount + fee;
 
         if (sender.balance < totalAmount) {
-            return { success: false, message: "Insufficient balance" };
+            return { success: false, message: "Insufficient balance. You have MWK " + formatMoney(sender.balance) };
         }
 
         // Find receiver (check all providers)
@@ -513,7 +532,7 @@ async function sendMoney(sessionToken, receiverNumber, amount, fee = 20) {
 
     } catch (error) {
         console.error("Send money error:", error);
-        return { success: false, message: "Transaction failed" };
+        return { success: false, message: "Transaction failed: " + error.message };
     }
 }
 
@@ -565,7 +584,7 @@ async function addAccount() {
     const result = await verifyAccount(provider, number, pin, nationalId);
 
     if (!result.success) {
-        showToast(result.message, "error");
+        showToast("❌ " + result.message, "error");
         return;
     }
 
@@ -576,7 +595,7 @@ async function addAccount() {
         number: result.account.number,
         name: result.account.name,
         type: result.account.type || "mobile",
-        balance: result.account.balance,
+        balance: result.account.balance || 0,
         createdAt: new Date().toISOString()
         // ❌ NO PASSWORD SAVED
     };
@@ -596,11 +615,24 @@ async function addAccount() {
     document.getElementById("accountName").value = "";
     document.getElementById("accountPin").value = "";
     document.getElementById("nationalId").value = "";
-    document.getElementById("nationalIdGroup").classList.remove("visible");
 
     renderAccounts();
 
-    showToast(`✅ Account ${result.account.name} verified and added successfully!`, "success");
+    // Show success with provider display name
+    const displayName = getProviderDisplayName(provider);
+    showToast("✅ " + displayName + " account " + result.account.name + " verified and added successfully!", "success");
+}
+
+
+function getProviderDisplayName(provider) {
+    const map = {
+        'tnm': 'TNM',
+        'airtel': 'Airtel Money',
+        'fdh': 'FDH Bank',
+        'nbs': 'NBS Bank',
+        'national': 'National Bank'
+    };
+    return map[provider] || provider;
 }
 
 
@@ -649,7 +681,7 @@ function renderAccounts() {
             "account-card";
 
 
-        const providerDisplay = account.provider.charAt(0).toUpperCase() + account.provider.slice(1);
+        const providerDisplay = getProviderDisplayName(account.provider);
 
         card.innerHTML = `
 
@@ -782,7 +814,7 @@ function openDeleteModal(account) {
     document
         .getElementById("deleteAccountName")
         .textContent =
-            account.provider.charAt(0).toUpperCase() + account.provider.slice(1) +
+            getProviderDisplayName(account.provider) +
             " - " +
             account.name;
 
@@ -869,7 +901,7 @@ function populateSendAccounts() {
         option.value =
             account.id;
 
-        const providerDisplay = account.provider.charAt(0).toUpperCase() + account.provider.slice(1);
+        const providerDisplay = getProviderDisplayName(account.provider);
 
         option.textContent =
             providerDisplay +
@@ -911,7 +943,7 @@ function populateReceiveAccounts() {
         option.value =
             account.id;
 
-        const providerDisplay = account.provider.charAt(0).toUpperCase() + account.provider.slice(1);
+        const providerDisplay = getProviderDisplayName(account.provider);
 
         option.textContent =
             providerDisplay +
@@ -1854,7 +1886,7 @@ async function lookupTransactionId() {
         document
             .getElementById("confirmReceiverAccount")
             .textContent =
-                transaction.receiver.provider +
+                getProviderDisplayName(transaction.receiver.provider) +
                 " • " +
                 transaction.receiver.accountNumber;
 
@@ -2117,7 +2149,7 @@ async function handleScannedQRCode(message) {
                 "confirmReceiverAccount"
             )
             .textContent =
-                transaction.receiver.provider +
+                getProviderDisplayName(transaction.receiver.provider) +
                 " • " +
                 transaction.receiver.accountNumber;
 
@@ -2353,7 +2385,7 @@ function showSendSuccess(transaction) {
         "To: " +
         receiver.accountName +
         "\n" +
-        receiver.provider +
+        getProviderDisplayName(receiver.provider) +
         " " +
         receiver.accountNumber,
         "success"
@@ -2544,6 +2576,8 @@ function renderTransactions() {
                   transaction.name;
 
 
+        const providerDisplay = getProviderDisplayName(transaction.provider || "");
+
         item.innerHTML = `
 
             <div class="transaction-top">
@@ -2555,9 +2589,7 @@ function renderTransactions() {
                     </strong>
 
                     <span>
-                        ${escapeHtml(
-                            transaction.provider || ""
-                        )}
+                        ${escapeHtml(providerDisplay)}
                         •
                         ${escapeHtml(
                             transaction.accountNumber || ""
@@ -2650,6 +2682,18 @@ function escapeHtml(value) {
 }
 
 
+function getProviderDisplayName(provider) {
+    const map = {
+        'tnm': 'TNM',
+        'airtel': 'Airtel Money',
+        'fdh': 'FDH Bank',
+        'nbs': 'NBS Bank',
+        'national': 'National Bank'
+    };
+    return map[provider] || provider;
+}
+
+
 
 /* =========================================================
    INITIALIZE
@@ -2663,7 +2707,7 @@ document.addEventListener(
 
         renderTransactions();
 
-        toggleNationalId();
+        toggleFields();
 
     }
 );

@@ -288,6 +288,14 @@ select:focus {
     border-color: #087f5b;
 }
 
+.hidden-input {
+    display: none;
+}
+
+.visible-input {
+    display: block;
+}
+
 
 
 /* ==========================================
@@ -853,11 +861,17 @@ select:focus {
     margin-top: 0;
 }
 
-#nationalIdGroup {
+#accountNumberGroup,
+#nationalIdGroup,
+#accountNameGroup,
+#accountPinGroup {
     display: none;
 }
 
-#nationalIdGroup.visible {
+#accountNumberGroup.visible,
+#nationalIdGroup.visible,
+#accountNameGroup.visible,
+#accountPinGroup.visible {
     display: block;
 }
 
